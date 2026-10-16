@@ -15,6 +15,8 @@
             <button onclick="mostrarSeccion('pacientes')">Pacientes</button>
             <button onclick="mostrarSeccion('turnos')">Sacar Turno</button>
             <button onclick="mostrarSeccion('reportes')">Reportes</button>
+            <!-- Agrega este botón en el <nav> dentro del header -->
+            <button onclick="mostrarSeccion('historial')">Historia Clínica</button>
         </nav>
     </header>
 
@@ -30,8 +32,26 @@
                 <button type="submit">Guardar Paciente</button>
             </form>
             <div id="lista-pacientes"></div>
-        </section>
+          <!-- Agrega esta nueva <section> dentro del <main> -->
+            <section id="seccion-historial" class="seccion" style="display:none;">
+            <h2>Gestión de Historia Clínica</h2>
+                <form id="form-historial">
+                <select id="historial-select-paciente" required>
+                    <option value="">Seleccione Paciente</option
+                    </select>
+        <input type="text" id="medico-responsable" placeholder="Médico Responsable" required>
+        <textarea id="diagnostico" placeholder="Diagnóstico médico" rows="3" required></textarea>
+        <textarea id="tratamiento" placeholder="Tratamiento / Receta indicada" rows="3" required></textarea>
+        <button type="submit">Guardar en Historia Clínica</button>
+    </form>
+    
+    <div id="contenedor-historial">
+        <h3>Historial del Paciente</h3>
+        <div id="resultado-historial">Seleccione un paciente para ver su historial.</div>
+    </div>
+</section>
 
+            
         <!-- Sección Turnos -->
         <section id="seccion-turnos" class="seccion" style="display:none;">
             <h2>Asignación de Turnos</h2>
@@ -57,3 +77,7 @@
     <script type="module" src="reportes.js"></script>
 </body>
 </html>
+
+
+
+
