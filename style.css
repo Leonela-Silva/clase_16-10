@@ -76,6 +76,10 @@ body {
     letter-spacing: -0.02em;
 }
 
+.brand h1 span {
+    color: var(--primary);
+}
+
 .brand p {
     font-size: 0.8rem;
     color: var(--text-muted);
@@ -114,7 +118,7 @@ body {
     }
 }
 
-/* Card Styling */
+/* Cards */
 .card {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -133,7 +137,7 @@ body {
     gap: 0.5rem;
 }
 
-/* Form */
+/* Inputs */
 .form-group {
     margin-bottom: 1rem;
 }
@@ -165,7 +169,7 @@ input:focus {
     box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
-/* Buttons */
+/* Botones */
 .btn-group {
     display: flex;
     gap: 0.75rem;
@@ -215,7 +219,7 @@ input:focus {
     min-height: 1.2rem;
 }
 
-/* Header de la lista/tabla */
+/* Lista de Pacientes */
 .list-header {
     display: flex;
     justify-content: space-between;
@@ -229,7 +233,6 @@ input:focus {
     width: 260px;
 }
 
-/* Pacientes Cards/Items */
 .patient-list {
     display: flex;
     flex-direction: column;
