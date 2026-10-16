@@ -5,31 +5,27 @@ const SUPABASE_KEY = 'sb_publishable_BwdIhPDdZzhfDBGtDvoxuA__SLZjTTx';
 // Inicializar Supabase cliente
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Referencias a los elementos de la pantalla
+// Captura de inputs y botones de tu HTML
 const nombreInput = document.getElementById('nombre');
 const dniInput = document.getElementById('dni');
 const telefonoInput = document.getElementById('telefono');
 const diagnosticoInput = document.getElementById('diagnostico');
-const buscarInput = document.getElementById('buscarInput');
 
 const btnGuardar = document.getElementById('btnGuardar');
 const btnCargar = document.getElementById('btnCargar');
-const btnBuscar = document.getElementById('btnBuscar');
 const listaPacientes = document.getElementById('listaPacientes');
 const statusMsg = document.getElementById('statusMsg');
 
-// Eventos al presionar botones y escribir
-btnGuardar.addEventListener('click', guardarPaciente);
-btnCargar.addEventListener('click', cargarTodosLosPacientes);
-btnBuscar.addEventListener('click', buscarPaciente);
-buscarInput.addEventListener('input', buscarPaciente);
+// Vincular botones
+if (btnGuardar) btnGuardar.addEventListener('click', guardarPaciente);
+if (btnCargar) btnCargar.addEventListener('click', cargarTodosLosPacientes);
 
-// 1. GUARDAR PACIENTE EN SUPABASE
+// 1. GUARDAR EN SUPABASE
 async function guardarPaciente() {
-    const nombre = nombreInput.value.trim();
-    const dni = dniInput.value.trim();
-    const telefono = telefonoInput.value.trim();
-    const diagnostico = diagnosticoInput.value.trim();
+    const nombre = nombreInput ? nombreInput.value.trim() : '';
+    const dni = dniInput ? dniInput.value.trim() : '';
+    const telefono = telefonoInput ? telefonoInput.value.trim() : '';
+    const diagnostico = diagnosticoInput ? diagnosticoInput.value.trim() : '';
 
     if (!nombre || !dni) {
         mostrarEstado('⚠️ Completa al menos el Nombre y el DNI.', '#ef4444');
@@ -57,7 +53,7 @@ async function guardarPaciente() {
     }
 }
 
-// 2. CONSULTAR Y MOSTRAR TODOS LOS PACIENTES
+// 2. CONSULTAR Y DEVOLVER PACIENTES
 async function cargarTodosLosPacientes() {
     mostrarEstado('Consultando base de datos...', '#f59e0b');
 
@@ -76,34 +72,7 @@ async function cargarTodosLosPacientes() {
     mostrarEstado(`✅ Registros devueltos: ${data.length}`, '#10b981');
 }
 
-// 3. BUSCAR PACIENTES POR DNI O NOMBRE
-async function buscarPaciente() {
-    const busqueda = buscarInput.value.trim();
-
-    if (busqueda === '') {
-        cargarTodosLosPacientes();
-        return;
-    }
-
-    mostrarEstado('Buscando coincidencia...', '#f59e0b');
-
-    const { data, error } = await supabase
-        .from('pacientes')
-        .select('*')
-        .or(`nombre.ilike.%${busqueda}%,dni.ilike.%${busqueda}%`)
-        .order('id', { ascending: false });
-
-    if (error) {
-        console.error('Error en búsqueda:', error);
-        mostrarEstado('❌ Error en búsqueda: ' + error.message, '#ef4444');
-        return;
-    }
-
-    renderizarLista(data);
-    mostrarEstado(`🔍 Coincidencias encontradas: ${data.length}`, '#10b981');
-}
-
-// 4. BORRAR PACIENTE DE LA BASE DE DATOS
+// 3. BORRAR PACIENTE
 window.borrarPaciente = async function(id) {
     if (!confirm('¿Seguro que deseas eliminar este paciente de Supabase?')) return;
 
@@ -122,8 +91,8 @@ window.borrarPaciente = async function(id) {
     }
 };
 
-// RENDERIZAR EN EL HTML
 function renderizarLista(pacientes) {
+    if (!listaPacientes) return;
     listaPacientes.innerHTML = '';
 
     if (!pacientes || pacientes.length === 0) {
@@ -134,12 +103,12 @@ function renderizarLista(pacientes) {
     pacientes.forEach(p => {
         const li = document.createElement('li');
         li.innerHTML = `
-            <div class="paciente-item">
-                <div class="paciente-info">
-                    <strong>👤 ${p.nombre}</strong> — (DNI: ${p.dni})
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong>👤 ${p.nombre}</strong> — (DNI: ${p.dni})<br>
                     <small>📞 Tel: ${p.telefono || 'Sin registrar'} | 📝 Diag: ${p.diagnostico || 'Sin registrar'}</small>
                 </div>
-                <button class="btn-delete" onclick="borrarPaciente(${p.id})">🗑️</button>
+                <button onclick="borrarPaciente(${p.id})" style="background:none; border:none; cursor:pointer; font-size:1.1rem;">🗑️</button>
             </div>
         `;
         listaPacientes.appendChild(li);
@@ -147,15 +116,17 @@ function renderizarLista(pacientes) {
 }
 
 function limpiarFormulario() {
-    nombreInput.value = '';
-    dniInput.value = '';
-    telefonoInput.value = '';
-    diagnosticoInput.value = '';
+    if (nombreInput) nombreInput.value = '';
+    if (dniInput) dniInput.value = '';
+    if (telefonoInput) telefonoInput.value = '';
+    if (diagnosticoInput) diagnosticoInput.value = '';
 }
 
 function mostrarEstado(mensaje, color) {
-    statusMsg.innerText = mensaje;
-    statusMsg.style.color = color;
+    if (statusMsg) {
+        statusMsg.innerText = mensaje;
+        statusMsg.style.color = color;
+    }
 }
 
 // Cargar automáticamente al abrir la página
