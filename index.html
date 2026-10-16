@@ -3,81 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clínica Médica - Gestión de Pacientes</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- CDN de Supabase -->
+    <title>Prueba de Supabase</title>
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Cargamos la librería oficial de Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <header>
-        <h1>Sistema de Gestión Médica - Clínica Salud</h1>
-        <nav>
-            <button onclick="mostrarSeccion('pacientes')">Pacientes</button>
-            <button onclick="mostrarSeccion('turnos')">Sacar Turno</button>
-            <button onclick="mostrarSeccion('reportes')">Reportes</button>
-            <!-- Agrega este botón en el <nav> dentro del header -->
-            <button onclick="mostrarSeccion('historial')">Historia Clínica</button>
-        </nav>
-    </header>
 
-    <main>
-        <!-- Sección Pacientes -->
-        <section id="seccion-pacientes" class="seccion">
-            <h2>Carga y Búsqueda de Pacientes</h2>
-            <form id="form-paciente">
-                <input type="text" id="nombre" placeholder="Nombre completo" required>
-                <input type="text" id="dni" placeholder="DNI" required>
-                <input type="email" id="email" placeholder="Correo electrónico" required>
-                <input type="text" id="telefono" placeholder="Teléfono" required>
-                <button type="submit">Guardar Paciente</button>
-            </form>
-            <div id="lista-pacientes"></div>
-          <!-- Agrega esta nueva <section> dentro del <main> -->
-            <section id="seccion-historial" class="seccion" style="display:none;">
-            <h2>Gestión de Historia Clínica</h2>
-                <form id="form-historial">
-                <select id="historial-select-paciente" required>
-                    <option value="">Seleccione Paciente</option
-                    </select>
-        <input type="text" id="medico-responsable" placeholder="Médico Responsable" required>
-        <textarea id="diagnostico" placeholder="Diagnóstico médico" rows="3" required></textarea>
-        <textarea id="tratamiento" placeholder="Tratamiento / Receta indicada" rows="3" required></textarea>
-        <button type="submit">Guardar en Historia Clínica</button>
-    </form>
-    
-    <div id="contenedor-historial">
-        <h3>Historial del Paciente</h3>
-        <div id="resultado-historial">Seleccione un paciente para ver su historial.</div>
+    <div class="panel">
+        <h2>🔥 Conexión a Supabase</h2>
+        
+        <div class="form-group">
+            <label>Nombre:</label>
+            <input type="text" id="nombreInput" placeholder="Ej: Leonela">
+        </div>
+
+        <div class="form-group">
+            <label>Email:</label>
+            <input type="email" id="emailInput" placeholder="Ej: usuario@gmail.com">
+        </div>
+
+        <div class="buttons">
+            <button id="btnGuardar" class="btn btn-primary">💾 Guardar Registro</button>
+            <button id="btnCargar" class="btn btn-secondary">🔄 Cargar Registros</button>
+        </div>
+
+        <p id="statusMsg" class="status"></p>
+
+        <h3>Registros en la Base de Datos:</h3>
+        <ul id="listaDatos" class="data-list"></ul>
     </div>
-</section>
 
-            
-        <!-- Sección Turnos -->
-        <section id="seccion-turnos" class="seccion" style="display:none;">
-            <h2>Asignación de Turnos</h2>
-            <form id="form-turno">
-                <select id="select-paciente" required><option value="">Seleccione Paciente</option></select>
-                <select id="select-especialista" required><option value="">Seleccione Especialista</option></select>
-                <input type="datetime-local" id="fecha-turno" required>
-                <button type="submit">Confirmar Turno</button>
-            </form>
-        </section>
-
-        <!-- Sección Reportes -->
-        <section id="seccion-reportes" class="seccion" style="display:none;">
-            <h2>Reportes y Estadísticas</h2>
-            <button id="btn-generar-reporte">Generar Resumen de Turnos</button>
-            <div id="resultado-reportes"></div>
-        </section>
-    </main>
-
-    <!-- Scripts Modulares -->
-    <script type="module" src="conexion.js"></script>
-    <script type="module" src="logica.js"></script>
-    <script type="module" src="reportes.js"></script>
+    <!-- Carga normal de JavaScript sin type="module" -->
+    <script src="app.js"></script>
 </body>
 </html>
-
-
-
-
