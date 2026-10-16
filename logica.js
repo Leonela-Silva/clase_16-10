@@ -1,9 +1,11 @@
 import { supabase } from './conexion.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. Cargar datos iniciales en los selects
     cargarDatosSelects();
-    
-    // Manejar alta de pacientes
+    cargarSelectHistorialPacientes();
+
+    // 2. Manejar alta de pacientes
     const formPaciente = document.getElementById('form-paciente');
     if (formPaciente) {
         formPaciente.addEventListener('submit', async (e) => {
@@ -13,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const email = document.getElementById('email').value;
             const telefono = document.getElementById('telefono').value;
 
-            const { data, error } = await supabase
+            const { error } = await supabase
                 .from('pacientes')
                 .insert([{ nombre, dni, email, telefono }]);
 
@@ -23,11 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('¡Paciente guardado con éxito!');
                 formPaciente.reset();
                 cargarDatosSelects();
+                cargarSelectHistorialPacientes();
             }
         });
     }
 
-    // Manejar asignación de turnos
+    // 3. Manejar asignación de turnos
     const formTurno = document.getElementById('form-turno');
     if (formTurno) {
         formTurno.addEventListener('submit', async (e) => {
@@ -48,7 +51,46 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // 4. Manejar alta de historia clínica
+    const formHistorial = document.getElementById('form-historial');
+    if (formHistorial) {
+        formHistorial.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const paciente_id = document.getElementById('historial-select-paciente').value;
+            const medico_responsable = document.getElementById('medico-responsable').value;
+            const diagnostico = document.getElementById('diagnostico').value;
+            const tratamiento = document.getElementById('tratamiento').value;
+
+            const { error } = await supabase
+                .from('historias_clinicas')
+                .insert([{ paciente_id, medico_responsable, diagnostico, tratamiento }]);
+
+            if (error) {
+                alert('Error al guardar la historia clínica: ' + error.message);
+            } else {
+                alert('¡Historia clínica actualizada con éxito!');
+                formHistorial.reset();
+                consultarHistorial(paciente_id);
+            }
+        });
+    }
+
+    // 5. Escuchar cambios en el selector de pacientes del historial
+    const selectHistorialPaciente = document.getElementById('historial-select-paciente');
+    if (selectHistorialPaciente) {
+        selectHistorialPaciente.addEventListener('change', (e) => {
+            const pacienteId = e.target.value;
+            if (pacienteId) {
+                consultarHistorial(pacienteId);
+            } else {
+                document.getElementById('resultado-historial').innerHTML = 'Seleccione un paciente para ver su historial.';
+            }
+        });
+    }
 });
+
+// --- Funciones auxiliares ---
 
 async function cargarDatosSelects() {
     const selectPaciente = document.getElementById('select-paciente');
@@ -71,7 +113,53 @@ async function cargarDatosSelects() {
     }
 }
 
-// Función global simple para cambiar pestañas
+async function cargarSelectHistorialPacientes() {
+    const select = document.getElementById('historial-select-paciente');
+    if (select) {
+        const { data: pacientes } = await supabase.from('pacientes').select('*');
+        select.innerHTML = '<option value="">Seleccione Paciente</option>';
+        pacientes?.forEach(p => {
+            select.innerHTML += `<option value="${p.id}">${p.nombre} (DNI: ${p.dni})</option>`;
+        });
+    }
+}
+
+async function consultarHistorial(pacienteId) {
+    const contenedor = document.getElementById('resultado-historial');
+    contenedor.innerHTML = '<p>Cargando historial...</p>';
+
+    const { data, error } = await supabase
+        .from('historias_clinicas')
+        .select('*')
+        .eq('paciente_id', pacienteId)
+        .order('fecha', { ascending: false });
+
+    if (error) {
+        contenedor.innerHTML = `<p style="color:red;">Error al cargar historial: ${error.message}</p>`;
+        return;
+    }
+
+    if (data.length === 0) {
+        contenedor.innerHTML = '<p>Este paciente no registra antecedentes en su historia clínica.</p>';
+        return;
+    }
+
+    let html = '';
+    data.forEach(h => {
+        html += `
+            <div class="item-historial">
+                <p><strong>Fecha:</strong> ${new Date(h.fecha).toLocaleString()}</p>
+                <p><strong>Médico:</strong> ${h.medico_responsable}</p>
+                <p><strong>Diagnóstico:</strong> ${h.diagnostico}</p>
+                <p><strong>Tratamiento:</strong> ${h.tratamiento}</p>
+            </div>
+        `;
+    });
+
+    contenedor.innerHTML = html;
+}
+
+// Función global para cambiar pestañas de la interfaz
 window.mostrarSeccion = function(seccion) {
     document.querySelectorAll('.seccion').forEach(s => s.style.display = 'none');
     document.getElementById(`seccion-${seccion}`).style.display = 'block';
