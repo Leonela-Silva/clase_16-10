@@ -5,12 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Pacientes | MediData</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- Cliente oficial de Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
     <div class="dashboard-container">
-        <!-- Top App Bar -->
+        <!-- Encabezado Principal -->
         <header class="app-header">
             <div class="brand">
                 <div class="brand-icon">🩺</div>
@@ -24,9 +25,9 @@
             </div>
         </header>
 
-        <!-- Main Content Layout -->
+        <!-- Contenido en Dos Columnas -->
         <div class="grid-layout">
-            <!-- Columna Izquierda: Formulario -->
+            <!-- Columna Izquierda: Formulario de Carga -->
             <aside class="card">
                 <h2 class="card-title">➕ Nuevo Paciente</h2>
                 
@@ -52,15 +53,15 @@
                     </div>
 
                     <div class="btn-group">
-                        <button type="button" id="btnGuardar" class="btn btn-primary">Guardar</button>
-                        <button type="button" id="btnCargar" class="btn btn-secondary">🔄</button>
+                        <button type="button" id="btnGuardar" class="btn btn-primary">💾 Guardar</button>
+                        <button type="button" id="btnCargar" class="btn btn-secondary" title="Sincronizar base de datos">🔄</button>
                     </div>
                 </form>
 
                 <p id="statusMsg" class="status-banner"></p>
             </aside>
 
-            <!-- Columna Derecha: Tabla/Lista de Pacientes -->
+            <!-- Columna Derecha: Búsqueda y Lista de Pacientes -->
             <main class="card">
                 <div class="list-header">
                     <h2 class="card-title" style="margin-bottom:0;">📋 Nómina de Pacientes</h2>
@@ -70,12 +71,13 @@
                 </div>
 
                 <div id="listaPacientes" class="patient-list">
-                    <div class="empty-state">Cargando registros...</div>
+                    <div class="empty-state">Cargando registros de Supabase...</div>
                 </div>
             </main>
         </div>
     </div>
 
+    <!-- Script Lógico de la App -->
     <script src="app.js"></script>
 </body>
 </html>
