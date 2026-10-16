@@ -61,3 +61,25 @@ button[type="submit"], #btn-generar-reporte {
 button[type="submit"]:hover {
     background-color: #21867a;
 }
+
+textarea {
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: inherit;
+    resize: vertical;
+}
+
+#contenedor-historial {
+    margin-top: 2rem;
+    border-top: 1px solid #ddd;
+    padding-top: 1rem;
+}
+
+.item-historial {
+    background: #f8f9fa;
+    border-left: 4px solid #0077b6;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0 4px 4px 0;
+}
