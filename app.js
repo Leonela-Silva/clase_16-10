@@ -10,15 +10,19 @@ const nombreInput = document.getElementById('nombre');
 const dniInput = document.getElementById('dni');
 const telefonoInput = document.getElementById('telefono');
 const diagnosticoInput = document.getElementById('diagnostico');
+const buscarInput = document.getElementById('buscarInput');
 
 const btnGuardar = document.getElementById('btnGuardar');
 const btnCargar = document.getElementById('btnCargar');
+const btnBuscar = document.getElementById('btnBuscar');
 const listaPacientes = document.getElementById('listaPacientes');
 const statusMsg = document.getElementById('statusMsg');
 
-// Vincular botones
+// Vincular eventos
 if (btnGuardar) btnGuardar.addEventListener('click', guardarPaciente);
 if (btnCargar) btnCargar.addEventListener('click', cargarTodosLosPacientes);
+if (btnBuscar) btnBuscar.addEventListener('click', buscarPaciente);
+if (buscarInput) buscarInput.addEventListener('input', buscarPaciente);
 
 // 1. GUARDAR EN SUPABASE
 async function guardarPaciente() {
@@ -53,7 +57,7 @@ async function guardarPaciente() {
     }
 }
 
-// 2. CONSULTAR Y DEVOLVER PACIENTES
+// 2. CONSULTAR Y DEVOLVER TODOS LOS PACIENTES
 async function cargarTodosLosPacientes() {
     mostrarEstado('Consultando base de datos...', '#f59e0b');
 
@@ -72,7 +76,34 @@ async function cargarTodosLosPacientes() {
     mostrarEstado(`✅ Registros devueltos: ${data.length}`, '#10b981');
 }
 
-// 3. BORRAR PACIENTE
+// 3. BUSCAR PACIENTES POR DNI O NOMBRE
+async function buscarPaciente() {
+    const busqueda = buscarInput ? buscarInput.value.trim() : '';
+
+    if (busqueda === '') {
+        cargarTodosLosPacientes();
+        return;
+    }
+
+    mostrarEstado('Buscando coincidencia...', '#f59e0b');
+
+    const { data, error } = await supabase
+        .from('pacientes')
+        .select('*')
+        .or(`nombre.ilike.%${busqueda}%,dni.ilike.%${busqueda}%`)
+        .order('id', { ascending: false });
+
+    if (error) {
+        console.error('Error en búsqueda:', error);
+        mostrarEstado('❌ Error en búsqueda: ' + error.message, '#ef4444');
+        return;
+    }
+
+    renderizarLista(data);
+    mostrarEstado(`🔍 Coincidencias encontradas: ${data.length}`, '#10b981');
+}
+
+// 4. BORRAR PACIENTE DE LA BASE DE DATOS
 window.borrarPaciente = async function(id) {
     if (!confirm('¿Seguro que deseas eliminar este paciente de Supabase?')) return;
 
@@ -106,7 +137,7 @@ function renderizarLista(pacientes) {
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <strong>👤 ${p.nombre}</strong> — (DNI: ${p.dni})<br>
-                    <small>📞 Tel: ${p.telefono || 'Sin registrar'} | 📝 Diag: ${p.diagnostico || 'Sin registrar'}</small>
+                    <small style="color: #8b949e;">📞 Tel: ${p.telefono || 'Sin registrar'} | 📝 Diag: ${p.diagnostico || 'Sin registrar'}</small>
                 </div>
                 <button onclick="borrarPaciente(${p.id})" style="background:none; border:none; cursor:pointer; font-size:1.1rem;">🗑️</button>
             </div>
@@ -129,5 +160,5 @@ function mostrarEstado(mensaje, color) {
     }
 }
 
-// Cargar automáticamente al abrir la página
+// Cargar automáticamente los datos guardados al abrir la página
 document.addEventListener('DOMContentLoaded', cargarTodosLosPacientes);
