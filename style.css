@@ -76,6 +76,30 @@ textarea {
     padding-top: 1rem;
 }
 
+.paciente-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.paciente-item small {
+    color: var(--text-muted);
+}
+
+.btn-delete {
+    background: transparent;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.btn-delete:hover {
+    background-color: rgba(239, 68, 68, 0.2);
+}
+
+
 .item-historial {
     background: #f8f9fa;
     border-left: 4px solid #0077b6;
