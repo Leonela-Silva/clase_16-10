@@ -3,61 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Pacientes - Supabase</title>
+    <title>Gestión de Pacientes | MediData</title>
     <link rel="stylesheet" href="styles.css">
-    
-    <!-- Librería CDN oficial de Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-    <div class="panel">
-        <h2>🏥 Registro y Consulta de Pacientes</h2>
-        
-        <!-- Formulario de Registro -->
-        <form id="pacienteForm" onsubmit="return false;">
-            <div class="form-group">
-                <label for="nombre">Nombre y Apellido:</label>
-                <input type="text" id="nombre" placeholder="Ej: María Pérez" required>
+    <div class="dashboard-container">
+        <!-- Top App Bar -->
+        <header class="app-header">
+            <div class="brand">
+                <div class="brand-icon">🩺</div>
+                <div>
+                    <h1>MediData <span>Pro</span></h1>
+                    <p>Sistema de Control y Gestión Médica</p>
+                </div>
             </div>
-
-            <div class="form-group">
-                <label for="dni">DNI / Identificación:</label>
-                <input type="text" id="dni" placeholder="Ej: 38123456" required>
+            <div class="status-indicator">
+                <span class="dot"></span> Supabase Conectado
             </div>
+        </header>
 
-            <div class="form-group">
-                <label for="telefono">Teléfono:</label>
-                <input type="text" id="telefono" placeholder="Ej: 1123456789">
-            </div>
+        <!-- Main Content Layout -->
+        <div class="grid-layout">
+            <!-- Columna Izquierda: Formulario -->
+            <aside class="card">
+                <h2 class="card-title">➕ Nuevo Paciente</h2>
+                
+                <form id="pacienteForm" onsubmit="return false;">
+                    <div class="form-group">
+                        <label>Nombre y Apellido</label>
+                        <input type="text" id="nombre" placeholder="Ej. Dra. María Pérez" required>
+                    </div>
 
-            <div class="form-group">
-                <label for="diagnostico">Diagnóstico / Observación:</label>
-                <input type="text" id="diagnostico" placeholder="Ej: Control clínico general">
-            </div>
+                    <div class="form-group">
+                        <label>DNI / Documento</label>
+                        <input type="text" id="dni" placeholder="Ej. 38123456" required>
+                    </div>
 
-            <div class="buttons">
-                <button type="button" id="btnGuardar" class="btn btn-primary">💾 Guardar Paciente</button>
-                <button type="button" id="btnCargar" class="btn btn-secondary">🔄 Cargar Todos</button>
-            </div>
-        </form>
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="text" id="telefono" placeholder="Ej. 1123456789">
+                    </div>
 
-        <p id="statusMsg" class="status"></p>
+                    <div class="form-group">
+                        <label>Diagnóstico / Observación</label>
+                        <input type="text" id="diagnostico" placeholder="Ej. Control preventivo">
+                    </div>
 
-        <!-- Sección de Búsqueda y Devolución de Datos -->
-        <div class="search-section">
-            <h3>🔍 Devolver / Buscar Paciente</h3>
-            <div class="search-box">
-                <input type="text" id="buscarInput" placeholder="Escribe el DNI o Nombre...">
-                <button type="button" id="btnBuscar" class="btn btn-secondary">Buscar</button>
-            </div>
+                    <div class="btn-group">
+                        <button type="button" id="btnGuardar" class="btn btn-primary">Guardar</button>
+                        <button type="button" id="btnCargar" class="btn btn-secondary">🔄</button>
+                    </div>
+                </form>
+
+                <p id="statusMsg" class="status-banner"></p>
+            </aside>
+
+            <!-- Columna Derecha: Tabla/Lista de Pacientes -->
+            <main class="card">
+                <div class="list-header">
+                    <h2 class="card-title" style="margin-bottom:0;">📋 Nómina de Pacientes</h2>
+                    <div class="search-box">
+                        <input type="text" id="buscarInput" placeholder="🔍 Buscar por DNI o Nombre...">
+                    </div>
+                </div>
+
+                <div id="listaPacientes" class="patient-list">
+                    <div class="empty-state">Cargando registros...</div>
+                </div>
+            </main>
         </div>
-
-        <h3>📋 Registros en la Base de Datos</h3>
-        <ul id="listaPacientes" class="data-list"></ul>
     </div>
 
-    <!-- Script principal de la aplicación -->
     <script src="app.js"></script>
 </body>
 </html>
