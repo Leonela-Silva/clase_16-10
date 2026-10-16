@@ -3,39 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prueba de Supabase</title>
+    <title>Gestión de Pacientes - Supabase</title>
     <link rel="stylesheet" href="styles.css">
     
-    <!-- Cargamos la librería oficial de Supabase -->
+    <!-- Librería CDN oficial de Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
     <div class="panel">
-        <h2>🔥 Conexión a Supabase</h2>
+        <h2>🏥 Registro y Consulta de Pacientes</h2>
         
-        <div class="form-group">
-            <label>Nombre:</label>
-            <input type="text" id="nombreInput" placeholder="Ej: Leonela">
-        </div>
+        <!-- Formulario de Registro -->
+        <form id="pacienteForm" onsubmit="return false;">
+            <div class="form-group">
+                <label for="nombre">Nombre y Apellido:</label>
+                <input type="text" id="nombre" placeholder="Ej: María Pérez" required>
+            </div>
 
-        <div class="form-group">
-            <label>Email:</label>
-            <input type="email" id="emailInput" placeholder="Ej: usuario@gmail.com">
-        </div>
+            <div class="form-group">
+                <label for="dni">DNI / Identificación:</label>
+                <input type="text" id="dni" placeholder="Ej: 38123456" required>
+            </div>
 
-        <div class="buttons">
-            <button id="btnGuardar" class="btn btn-primary">💾 Guardar Registro</button>
-            <button id="btnCargar" class="btn btn-secondary">🔄 Cargar Registros</button>
-        </div>
+            <div class="form-group">
+                <label for="telefono">Teléfono:</label>
+                <input type="text" id="telefono" placeholder="Ej: 1123456789">
+            </div>
+
+            <div class="form-group">
+                <label for="diagnostico">Diagnóstico / Observación:</label>
+                <input type="text" id="diagnostico" placeholder="Ej: Control clínico general">
+            </div>
+
+            <div class="buttons">
+                <button type="button" id="btnGuardar" class="btn btn-primary">💾 Guardar Paciente</button>
+                <button type="button" id="btnCargar" class="btn btn-secondary">🔄 Cargar Todos</button>
+            </div>
+        </form>
 
         <p id="statusMsg" class="status"></p>
 
-        <h3>Registros en la Base de Datos:</h3>
-        <ul id="listaDatos" class="data-list"></ul>
+        <!-- Sección de Búsqueda y Devolución de Datos -->
+        <div class="search-section">
+            <h3>🔍 Devolver / Buscar Paciente</h3>
+            <div class="search-box">
+                <input type="text" id="buscarInput" placeholder="Escribe el DNI o Nombre...">
+                <button type="button" id="btnBuscar" class="btn btn-secondary">Buscar</button>
+            </div>
+        </div>
+
+        <h3>📋 Registros en la Base de Datos</h3>
+        <ul id="listaPacientes" class="data-list"></ul>
     </div>
 
-    <!-- Carga normal de JavaScript sin type="module" -->
+    <!-- Script principal de la aplicación -->
     <script src="app.js"></script>
 </body>
 </html>
