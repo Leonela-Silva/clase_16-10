@@ -1,9 +1,9 @@
-// app.js - Sincronización Directa con Supabase
+// app.js - Flujo de Interfaz Limpio y Asíncrono
 document.addEventListener('DOMContentLoaded', () => {
-    // Cargar la lista al iniciar
+    // Cargar la lista silenciosamente al iniciar
     cargarPacientes();
 
-    // Asignar eventos a botones e inputs
+    // Asignar eventos
     const btnGuardar = document.getElementById('btnGuardar');
     const buscarInput = document.getElementById('buscarInput');
 
@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (buscarInput) buscarInput.addEventListener('input', buscarPaciente);
 });
 
-// Mensaje de estado visual en el panel
+// Función auxiliar para mostrar notificaciones únicamente cuando sea necesario
 function mostrarEstado(mensaje, esError = false) {
     const statusMsg = document.getElementById('statusMsg');
     if (statusMsg) {
@@ -20,12 +20,10 @@ function mostrarEstado(mensaje, esError = false) {
     }
 }
 
-// 1. CARGAR PACIENTES DESDE SUPABASE
+// 1. CARGAR PACIENTES
 async function cargarPacientes() {
     const lista = document.getElementById('listaPacientes');
     if (!lista) return;
-
-    mostrarEstado('Conectando con Supabase...');
 
     try {
         const { data, error } = await supabase
@@ -35,15 +33,13 @@ async function cargarPacientes() {
 
         if (error) {
             console.error('Error Supabase:', error);
-            mostrarEstado('❌ Error al cargar: ' + error.message, true);
-            lista.innerHTML = `<div class="empty-state">Error: ${error.message}</div>`;
+            mostrarEstado('❌ Error de conexión: ' + error.message, true);
+            lista.innerHTML = `<div class="empty-state">No se pudieron recuperar los registros.</div>`;
             return;
         }
 
-        mostrarEstado(`✅ Conectado (${data ? data.length : 0} pacientes)`);
-
         if (!data || data.length === 0) {
-            lista.innerHTML = '<div class="empty-state">No hay pacientes registrados en la base de datos.</div>';
+            lista.innerHTML = '<div class="empty-state">No hay pacientes registrados.</div>';
             return;
         }
 
@@ -51,11 +47,11 @@ async function cargarPacientes() {
 
     } catch (err) {
         console.error('Error General:', err);
-        mostrarEstado('❌ Error de red/script: ' + err.message, true);
+        mostrarEstado('❌ Error en el script: ' + err.message, true);
     }
 }
 
-// 2. GUARDAR UN NUEVO PACIENTE
+// 2. GUARDAR PACIENTE
 async function guardarPaciente() {
     const nombre = document.getElementById('nombre') ? document.getElementById('nombre').value.trim() : '';
     const dni = document.getElementById('dni') ? document.getElementById('dni').value.trim() : '';
@@ -67,7 +63,7 @@ async function guardarPaciente() {
         return;
     }
 
-    mostrarEstado('Guardando paciente...');
+    mostrarEstado('Guardando...');
 
     try {
         const { error } = await supabase
@@ -81,13 +77,16 @@ async function guardarPaciente() {
             mostrarEstado('✅ ¡Paciente guardado exitosamente!');
             limpiarFormulario();
             cargarPacientes();
+            
+            // Ocultar mensaje de éxito tras 4 segundos
+            setTimeout(() => { mostrarEstado(''); }, 4000);
         }
     } catch (err) {
         mostrarEstado('❌ Error inesperado: ' + err.message, true);
     }
 }
 
-// 3. RENDERIZAR LISTA CON HISTORIAL EXPANDIBLE
+// 3. RENDERIZAR LISTA
 function renderizarPacientes(pacientes) {
     const lista = document.getElementById('listaPacientes');
     if (!lista) return;
@@ -123,7 +122,30 @@ function renderizarPacientes(pacientes) {
     });
 }
 
-// 4. ELIMINAR PACIENTE
+// 4. BUSCADOR EN TIEMPO REAL
+async function buscarPaciente() {
+    const busqueda = document.getElementById('buscarInput').value.trim();
+
+    if (busqueda === '') {
+        cargarPacientes();
+        return;
+    }
+
+    const { data, error } = await supabase
+        .from('pacientes')
+        .select('*')
+        .or(`nombre.ilike.%${busqueda}%,dni.ilike.%${busqueda}%`);
+
+    if (!error && data) {
+        if (data.length === 0) {
+            document.getElementById('listaPacientes').innerHTML = '<div class="empty-state">No se encontraron resultados.</div>';
+        } else {
+            renderizarPacientes(data);
+        }
+    }
+}
+
+// 5. ELIMINAR PACIENTE
 async function borrarPaciente(id, nombre) {
     if (!confirm(`¿Deseas eliminar el registro de ${nombre}?`)) return;
 
@@ -139,26 +161,7 @@ async function borrarPaciente(id, nombre) {
     }
 }
 
-// 5. BUSCADOR EN TIEMPO REAL
-async function buscarPaciente() {
-    const busqueda = document.getElementById('buscarInput').value.trim();
-
-    if (busqueda === '') {
-        cargarPacientes();
-        return;
-    }
-
-    const { data, error } = await supabase
-        .from('pacientes')
-        .select('*')
-        .or(`nombre.ilike.%${busqueda}%,dni.ilike.%${busqueda}%`);
-
-    if (!error && data) {
-        renderizarPacientes(data);
-    }
-}
-
-// MOSTRAR/OCULTAR FICHA
+// TOGGLE FICHA
 function toggleHistorial(id) {
     const el = document.getElementById(`historial-${id}`);
     if (el) {
@@ -172,4 +175,4 @@ function limpiarFormulario() {
         const el = document.getElementById(id);
         if (el) el.value = '';
     });
-        }
+}
