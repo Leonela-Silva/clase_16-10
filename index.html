@@ -56,8 +56,8 @@
                     </div>
                 </form>
 
-                <!-- Cartel indicador de estado / errores -->
-                <p id="statusMsg" class="status-banner" style="margin-top: 15px; font-weight: bold;"></p>
+                <!-- Cartel de estado (Inicialmente vacío, solo actúa tras una acción) -->
+                <p id="statusMsg" class="status-banner" style="margin-top: 15px; font-weight: bold; min-height: 20px;"></p>
             </aside>
 
             <!-- Panel Derecho: Lista e Historial -->
@@ -70,7 +70,7 @@
                 </div>
 
                 <div id="listaPacientes" class="patient-list" style="margin-top: 15px;">
-                    <div class="empty-state">Iniciando consulta a Supabase...</div>
+                    <!-- Empieza limpio sin mensajes de consulta prematuros -->
                 </div>
             </main>
 
