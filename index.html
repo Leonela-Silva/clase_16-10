@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediData Pro - Control Médico</title>
+    <title>MediData Pro - Control Médico y Turnos</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
     <div class="dashboard-container">
-        <!-- Encabezado del Sistema -->
+        <!-- Encabezado -->
         <header class="app-header">
             <div class="brand">
                 <div class="brand-icon">🩺</div>
                 <div>
                     <h1>MediData <span>Pro</span></h1>
-                    <p>Gestión de Pacientes e Historial Clínico</p>
+                    <p>Gestión de Pacientes, Turnos e Historial Clínico</p>
                 </div>
             </div>
             <div class="status-indicator">
@@ -23,66 +23,103 @@
             </div>
         </header>
 
-        <!-- Panel de Control Principal -->
+        <!-- Contenido principal -->
         <div class="grid-layout">
-            <!-- Formulario de Registro -->
+            
+            <!-- Columna Izquierda: Formularios y Selector de Módulo -->
             <aside class="card">
-                <h2 class="card-title">➕ Registrar Paciente</h2>
-                
-                <form id="pacienteForm" onsubmit="event.preventDefault();">
-                    <div class="form-group">
-                        <label for="nombre">Nombre y Apellido</label>
-                        <input type="text" id="nombre" placeholder="Ej. Dra. María Pérez" required>
-                    </div>
+                <!-- Botones para alternar entre Pacientes y Turnos -->
+                <div class="tab-buttons" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button id="tabPacientes" class="btn btn-primary" onclick="cambiarModulo('pacientes')" style="flex:1;">👤 Pacientes</button>
+                    <button id="tabTurnos" class="btn btn-secondary" onclick="cambiarModulo('turnos')" style="flex:1;">📅 Turnos</button>
+                </div>
 
-                    <div class="form-group">
-                        <label for="dni">DNI / Documento</label>
-                        <input type="text" id="dni" placeholder="Ej. 38123456" required>
-                    </div>
+                <!-- Formulario 1: Registrar Paciente -->
+                <div id="secFormPaciente">
+                    <h2 class="card-title">➕ Registrar Paciente</h2>
+                    <form id="pacienteForm" onsubmit="event.preventDefault();">
+                        <div class="form-group">
+                            <label for="nombre">Nombre y Apellido</label>
+                            <input type="text" id="nombre" placeholder="Ej. Dra. María Pérez" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="dni">DNI / Documento</label>
+                            <input type="text" id="dni" placeholder="Ej. 38123456" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="telefono">Teléfono</label>
+                            <input type="text" id="telefono" placeholder="Ej. 1123456789">
+                        </div>
+                        <div class="form-group">
+                            <label for="diagnostico">Observaciones / Diagnóstico</label>
+                            <input type="text" id="diagnostico" placeholder="Ej. Hipertensión, notas médicas...">
+                        </div>
+                        <div class="btn-group">
+                            <button type="button" id="btnGuardar" class="btn btn-primary">💾 Guardar Paciente</button>
+                            <button type="button" id="btnCargar" class="btn btn-secondary" title="Sincronizar">🔄</button>
+                        </div>
+                    </form>
+                </div>
 
-                    <div class="form-group">
-                        <label for="telefono">Teléfono</label>
-                        <input type="text" id="telefono" placeholder="Ej. 1123456789">
-                    </div>
+                <!-- Formulario 2: Agendar Turno -->
+                <div id="secFormTurno" style="display: none;">
+                    <h2 class="card-title">📅 Agendar Nuevo Turno</h2>
+                    <form id="turnoForm" onsubmit="event.preventDefault();">
+                        <div class="form-group">
+                            <label for="pacienteTurnoSelect">Seleccionar Paciente</label>
+                            <select id="pacienteTurnoSelect" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; background-color: #f8fafc;">
+                                <option value="">Cargando lista de pacientes...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="fechaTurno">Fecha y Hora</label>
+                            <input type="datetime-local" id="fechaTurno" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="motivoTurno">Especialidad / Motivo</label>
+                            <input type="text" id="motivoTurno" placeholder="Ej. Consulta General, Cardiología">
+                        </div>
+                        <div class="btn-group">
+                            <button type="button" id="btnGuardarTurno" class="btn btn-primary">📅 Guardar Turno</button>
+                        </div>
+                    </form>
+                </div>
 
-                    <div class="form-group">
-                        <label for="diagnostico">Observaciones / Email</label>
-                        <input type="text" id="diagnostico" placeholder="Ej. paciente@email.com o nota">
-                    </div>
-
-                    <div class="btn-group">
-                        <button type="button" id="btnGuardar" class="btn btn-primary">💾 Guardar Paciente</button>
-                        <button type="button" id="btnCargar" class="btn btn-secondary" title="Sincronizar">🔄</button>
-                    </div>
-                </form>
-
-                <p id="statusMsg" class="status-banner"></p>
+                <p id="statusMsg" class="status-banner" style="margin-top: 15px;"></p>
             </aside>
 
-            <!-- Lista de Historial de Pacientes -->
+            <!-- Columna Derecha: Listados y Búsqueda -->
             <main class="card">
-                <div class="list-header">
-                    <h2 class="card-title" style="margin-bottom:0;">📋 Historial de Registros</h2>
-                    <div class="search-box">
-                        <input type="text" id="buscarInput" placeholder="🔍 Buscar por DNI o Nombre...">
+                <!-- Vista: Lista de Pacientes e Historial -->
+                <div id="secListaPacientes">
+                    <div class="list-header">
+                        <h2 class="card-title" style="margin-bottom:0;">📋 Historial de Registros</h2>
+                        <div class="search-box">
+                            <input type="text" id="buscarInput" placeholder="🔍 Buscar por DNI o Nombre...">
+                        </div>
+                    </div>
+                    <div id="listaPacientes" class="patient-list">
+                        <div class="empty-state">Iniciando conexión con Supabase...</div>
                     </div>
                 </div>
 
-                <div id="listaPacientes" class="patient-list">
-                    <div class="empty-state">Iniciando conexión con Supabase...</div>
+                <!-- Vista: Lista de Turnos Agendados -->
+                <div id="secListaTurnos" style="display: none;">
+                    <div class="list-header">
+                        <h2 class="card-title" style="margin-bottom:0;">🗓️ Próximos Turnos</h2>
+                    </div>
+                    <div id="listaTurnos" class="patient-list">
+                        <div class="empty-state">No hay turnos programados.</div>
+                    </div>
                 </div>
             </main>
+
         </div>
     </div>
 
-    <!-- Scripts cargados en el orden estricto -->
-    <!-- 1. Librería CDN de Supabase -->
+    <!-- Carga de Scripts en Orden -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <!-- 2. Inicialización de la conexión global (conexion.js) -->
     <script src="conexion.js"></script>
-    
-    <!-- 3. Funciones y eventos del panel (app.js) -->
     <script src="app.js"></script>
 </body>
 </html>
