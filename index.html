@@ -3,81 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Pacientes | MediData</title>
+    <title>MediData Pro - Panel de Control</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- Cliente oficial de Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
     <div class="dashboard-container">
-        <!-- Encabezado Principal -->
+        <!-- Encabezado -->
         <header class="app-header">
             <div class="brand">
                 <div class="brand-icon">🩺</div>
                 <div>
                     <h1>MediData <span>Pro</span></h1>
-                    <p>Sistema de Control y Gestión Médica</p>
+                    <p>Gestión de Pacientes e Historial Clínico</p>
                 </div>
             </div>
             <div class="status-indicator">
-                <span class="dot"></span> Supabase Conectado
+                <span class="dot"></span> Sistema Conectado
             </div>
         </header>
 
-        <!-- Contenido en Dos Columnas -->
+        <!-- Contenido principal -->
         <div class="grid-layout">
-            <!-- Columna Izquierda: Formulario de Carga -->
+            <!-- Formulario de Registro -->
             <aside class="card">
-                <h2 class="card-title">➕ Nuevo Paciente</h2>
+                <h2 class="card-title">➕ Registrar Paciente</h2>
                 
-                <form id="pacienteForm" onsubmit="return false;">
+                <form id="pacienteForm" onsubmit="event.preventDefault();">
                     <div class="form-group">
-                        <label>Nombre y Apellido</label>
+                        <label for="nombre">Nombre y Apellido</label>
                         <input type="text" id="nombre" placeholder="Ej. Dra. María Pérez" required>
                     </div>
 
                     <div class="form-group">
-                        <label>DNI / Documento</label>
+                        <label for="dni">DNI / Documento</label>
                         <input type="text" id="dni" placeholder="Ej. 38123456" required>
                     </div>
 
                     <div class="form-group">
-                        <label>Teléfono</label>
+                        <label for="telefono">Teléfono</label>
                         <input type="text" id="telefono" placeholder="Ej. 1123456789">
                     </div>
 
                     <div class="form-group">
-                        <label>Diagnóstico / Observación</label>
-                        <input type="text" id="diagnostico" placeholder="Ej. Control preventivo">
+                        <label for="diagnostico">Observaciones / Email</label>
+                        <input type="text" id="diagnostico" placeholder="Ej. paciente@email.com o nota">
                     </div>
 
                     <div class="btn-group">
-                        <button type="button" id="btnGuardar" class="btn btn-primary">💾 Guardar</button>
-                        <button type="button" id="btnCargar" class="btn btn-secondary" title="Sincronizar base de datos">🔄</button>
+                        <button type="button" id="btnGuardar" class="btn btn-primary">💾 Guardar Paciente</button>
+                        <button type="button" id="btnCargar" class="btn btn-secondary" title="Sincronizar">🔄</button>
                     </div>
                 </form>
 
                 <p id="statusMsg" class="status-banner"></p>
             </aside>
 
-            <!-- Columna Derecha: Búsqueda y Lista de Pacientes -->
+            <!-- Historial y Nómina -->
             <main class="card">
                 <div class="list-header">
-                    <h2 class="card-title" style="margin-bottom:0;">📋 Nómina de Pacientes</h2>
+                    <h2 class="card-title" style="margin-bottom:0;">📋 Historial de Registros</h2>
                     <div class="search-box">
                         <input type="text" id="buscarInput" placeholder="🔍 Buscar por DNI o Nombre...">
                     </div>
                 </div>
 
                 <div id="listaPacientes" class="patient-list">
-                    <div class="empty-state">Cargando registros de Supabase...</div>
+                    <div class="empty-state">Iniciando conexión con Supabase...</div>
                 </div>
             </main>
         </div>
     </div>
 
-    <!-- Script Lógico de la App -->
+    <!-- Carga de Scripts en Orden -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="conexion.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
