@@ -1,61 +1,32 @@
-// Configuración de Supabase
+// Configuración exacta del proyecto Supabase
 const SUPABASE_URL = 'https://vipxyjfjdnkfhxcukfut.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_BwdIhPDdZzhfDBGtDvoxuA__SLZjTTx';
 
+// Inicialización del cliente de Supabase
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Captura de Elementos
-const nombreInput = document.getElementById('nombre');
-const dniInput = document.getElementById('dni');
-const telefonoInput = document.getElementById('telefono');
-const diagnosticoInput = document.getElementById('diagnostico');
-const buscarInput = document.getElementById('buscarInput');
+// Event Listeners al cargar el DOM
+document.addEventListener('DOMContentLoaded', () => {
+    cargarTodosLosPacientes();
 
-const btnGuardar = document.getElementById('btnGuardar');
-const btnCargar = document.getElementById('btnCargar');
-const listaPacientes = document.getElementById('listaPacientes');
-const statusMsg = document.getElementById('statusMsg');
+    const btnGuardar = document.getElementById('btnGuardar');
+    const btnCargar = document.getElementById('btnCargar');
+    const buscarInput = document.getElementById('buscarInput');
 
-// Listeners
-if (btnGuardar) btnGuardar.addEventListener('click', guardarPaciente);
-if (btnCargar) btnCargar.addEventListener('click', cargarTodosLosPacientes);
-if (buscarInput) buscarInput.addEventListener('input', buscarPaciente);
+    if (btnGuardar) btnGuardar.addEventListener('click', guardarPaciente);
+    if (btnCargar) btnCargar.addEventListener('click', cargarTodosLosPacientes);
+    if (buscarInput) buscarInput.addEventListener('input', buscarPaciente);
+});
 
-// 1. GUARDAR PACIENTE (Ajustado al esquema real de la tabla pacientes: id, nombre, dni, email, telefono)
-async function guardarPaciente() {
-    const nombre = nombreInput ? nombreInput.value.trim() : '';
-    const dni = dniInput ? dniInput.value.trim() : '';
-    const telefono = telefonoInput ? telefonoInput.value.trim() : '';
-    const email = diagnosticoInput ? diagnosticoInput.value.trim() : ''; // Guardamos las observaciones/email en el campo email
-
-    if (!nombre || !dni) {
-        mostrarEstado('⚠️ Completa Nombre y DNI.', '#ef4444');
-        mostrarNotificacion('⚠️ Ingresa Nombre y DNI', 'error');
-        return;
-    }
-
-    mostrarEstado('Guardando en Supabase...', '#06b6d4');
-
-    // Insert con las columnas reales de Supabase
-    const { error } = await supabase
-        .from('pacientes')
-        .insert([{ nombre, dni, telefono, email }]);
-
-    if (error) {
-        console.error('Error Supabase:', error);
-        mostrarEstado('❌ Error: ' + error.message, '#ef4444');
-        mostrarNotificacion('❌ Error: ' + error.message, 'error');
-    } else {
-        mostrarEstado('✅ Paciente registrado.', '#10b981');
-        mostrarNotificacion(`✅ ¡${nombre} guardado correctamente!`, 'exito');
-        limpiarFormulario();
-        cargarTodosLosPacientes();
-    }
-}
-
-// 2. CARGAR TODOS LOS PACIENTES
+// 1. OBTENER Y MOSTRAR PACIENTES
 async function cargarTodosLosPacientes() {
-    mostrarEstado('Sincronizando con Supabase...', '#06b6d4');
+    const lista = document.getElementById('listaPacientes');
+    const statusMsg = document.getElementById('statusMsg');
+
+    if (statusMsg) {
+        statusMsg.innerText = 'Cargando registros...';
+        statusMsg.style.color = '#06b6d4';
+    }
 
     const { data, error } = await supabase
         .from('pacientes')
@@ -64,18 +35,71 @@ async function cargarTodosLosPacientes() {
 
     if (error) {
         console.error('Error al cargar:', error);
-        mostrarEstado('❌ Error: ' + error.message, '#ef4444');
-        mostrarNotificacion('❌ Error al consultar la base de datos', 'error');
+        if (statusMsg) {
+            statusMsg.innerText = '❌ Error de conexión: ' + error.message;
+            statusMsg.style.color = '#ef4444';
+        }
+        if (lista) lista.innerHTML = `<div class="empty-state">Error al cargar datos.</div>`;
         return;
     }
 
+    if (statusMsg) {
+        statusMsg.innerText = `Sincronizado (${data ? data.length : 0} pacientes)`;
+        statusMsg.style.color = '#10b981';
+    }
+
     renderizarLista(data);
-    mostrarEstado(`Base de datos actualizada (${data.length} pacientes)`, '#10b981');
 }
 
-// 3. BUSCAR PACIENTE
+// 2. GUARDAR NUEVO PACIENTE
+async function guardarPaciente() {
+    const nombreInput = document.getElementById('nombre');
+    const dniInput = document.getElementById('dni');
+    const telefonoInput = document.getElementById('telefono');
+    const diagnosticoInput = document.getElementById('diagnostico');
+    const statusMsg = document.getElementById('statusMsg');
+
+    const nombre = nombreInput ? nombreInput.value.trim() : '';
+    const dni = dniInput ? dniInput.value.trim() : '';
+    const telefono = telefonoInput ? telefonoInput.value.trim() : '';
+    const email = diagnosticoInput ? diagnosticoInput.value.trim() : '';
+
+    if (!nombre || !dni) {
+        if (statusMsg) {
+            statusMsg.innerText = '⚠️ Completa Nombre y DNI';
+            statusMsg.style.color = '#ef4444';
+        }
+        return;
+    }
+
+    if (statusMsg) {
+        statusMsg.innerText = 'Guardando paciente...';
+        statusMsg.style.color = '#06b6d4';
+    }
+
+    const { error } = await supabase
+        .from('pacientes')
+        .insert([{ nombre, dni, telefono, email }]);
+
+    if (error) {
+        console.error('Error al guardar:', error);
+        if (statusMsg) {
+            statusMsg.innerText = '❌ Error al guardar: ' + error.message;
+            statusMsg.style.color = '#ef4444';
+        }
+    } else {
+        if (statusMsg) {
+            statusMsg.innerText = '✅ ¡Paciente guardado exitosamente!';
+            statusMsg.style.color = '#10b981';
+        }
+        limpiarFormulario();
+        cargarTodosLosPacientes();
+    }
+}
+
+// 3. BUSCAR EN TIEMPO REAL
 async function buscarPaciente() {
-    const busqueda = buscarInput ? buscarInput.value.trim() : '';
+    const busqueda = document.getElementById('buscarInput').value.trim();
 
     if (busqueda === '') {
         cargarTodosLosPacientes();
@@ -88,34 +112,36 @@ async function buscarPaciente() {
         .or(`nombre.ilike.%${busqueda}%,dni.ilike.%${busqueda}%`)
         .order('id', { ascending: false });
 
-    if (error) return;
-    renderizarLista(data);
+    if (!error) {
+        renderizarLista(data);
+    }
 }
 
 // 4. ELIMINAR PACIENTE
-window.borrarPaciente = async function(id, nombre) {
-    if (!confirm(`¿Deseas eliminar a ${nombre || 'este paciente'}?`)) return;
+async function borrarPaciente(id, nombre) {
+    if (!confirm(`¿Deseas eliminar a ${nombre}?`)) return;
 
-    mostrarEstado('Eliminando registro...', '#06b6d4');
-
-    const { error } = await supabase.from('pacientes').delete().eq('id', id);
+    const { error } = await supabase
+        .from('pacientes')
+        .delete()
+        .eq('id', id);
 
     if (error) {
-        mostrarEstado('❌ Error al eliminar', '#ef4444');
-        mostrarNotificacion('❌ No se pudo eliminar', 'error');
+        alert('Error al eliminar: ' + error.message);
     } else {
-        mostrarNotificacion('🗑️ Paciente eliminado', 'exito');
         cargarTodosLosPacientes();
     }
-};
+}
 
-// AUXILIARES
+// FUNCIONES AUXILIARES
 function renderizarLista(pacientes) {
-    if (!listaPacientes) return;
-    listaPacientes.innerHTML = '';
+    const lista = document.getElementById('listaPacientes');
+    if (!lista) return;
+
+    lista.innerHTML = '';
 
     if (!pacientes || pacientes.length === 0) {
-        listaPacientes.innerHTML = '<div class="empty-state">No hay pacientes registrados en Supabase.</div>';
+        lista.innerHTML = '<div class="empty-state">No hay pacientes registrados.</div>';
         return;
     }
 
@@ -131,57 +157,24 @@ function renderizarLista(pacientes) {
                     <div class="patient-meta">
                         <span class="badge">DNI: ${p.dni}</span>
                         <span>📱 ${p.telefono || 'Sin teléfono'}</span>
-                        <span>📧 ${p.email || 'Sin observaciones'}</span>
+                        <span>📧 ${p.email || 'Sin datos'}</span>
                     </div>
                 </div>
             </div>
             <button class="btn-delete" onclick="borrarPaciente(${p.id}, '${p.nombre}')" title="Eliminar paciente">🗑️</button>
         `;
-        listaPacientes.appendChild(card);
+        lista.appendChild(card);
     });
 }
 
 function limpiarFormulario() {
-    if (nombreInput) nombreInput.value = '';
-    if (dniInput) dniInput.value = '';
-    if (telefonoInput) telefonoInput.value = '';
-    if (diagnosticoInput) diagnosticoInput.value = '';
+    const nombre = document.getElementById('nombre');
+    const dni = document.getElementById('dni');
+    const telefono = document.getElementById('telefono');
+    const diagnostico = document.getElementById('diagnostico');
+
+    if (nombre) nombre.value = '';
+    if (dni) dni.value = '';
+    if (telefono) telefono.value = '';
+    if (diagnostico) diagnostico.value = '';
 }
-
-function mostrarEstado(mensaje, color) {
-    if (statusMsg) {
-        statusMsg.innerText = mensaje;
-        statusMsg.style.color = color;
-    }
-}
-
-function mostrarNotificacion(mensaje, tipo = 'exito') {
-    const toast = document.createElement('div');
-    toast.style.cssText = `
-        position: fixed;
-        bottom: 24px;
-        right: 24px;
-        background: ${tipo === 'exito' ? '#10b981' : '#ef4444'};
-        color: #ffffff;
-        padding: 12px 20px;
-        border-radius: 10px;
-        font-weight: 700;
-        font-size: 0.88rem;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-        z-index: 9999;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    `;
-    toast.innerText = mensaje;
-    document.body.appendChild(toast);
-
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateY(10px)';
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
-}
-
-document.addEventListener('DOMContentLoaded', cargarTodosLosPacientes);
