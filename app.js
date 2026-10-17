@@ -4,7 +4,7 @@ const SUPABASE_KEY = 'sb_publishable_BwdIhPDdZzhfDBGtDvoxuA__SLZjTTx';
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Elementos DOM
+// Captura de Elementos
 const nombreInput = document.getElementById('nombre');
 const dniInput = document.getElementById('dni');
 const telefonoInput = document.getElementById('telefono');
@@ -21,40 +21,41 @@ if (btnGuardar) btnGuardar.addEventListener('click', guardarPaciente);
 if (btnCargar) btnCargar.addEventListener('click', cargarTodosLosPacientes);
 if (buscarInput) buscarInput.addEventListener('input', buscarPaciente);
 
-// 1. CARGAR/INSERTAR EN LA BASE DE DATOS
+// 1. GUARDAR PACIENTE (Ajustado al esquema real de la tabla pacientes: id, nombre, dni, email, telefono)
 async function guardarPaciente() {
     const nombre = nombreInput ? nombreInput.value.trim() : '';
     const dni = dniInput ? dniInput.value.trim() : '';
     const telefono = telefonoInput ? telefonoInput.value.trim() : '';
-    const diagnostico = diagnosticoInput ? diagnosticoInput.value.trim() : '';
+    const email = diagnosticoInput ? diagnosticoInput.value.trim() : ''; // Guardamos las observaciones/email en el campo email
 
     if (!nombre || !dni) {
         mostrarEstado('⚠️ Completa Nombre y DNI.', '#ef4444');
-        mostrarNotificacion('⚠️ Por favor completa Nombre y DNI', 'error');
+        mostrarNotificacion('⚠️ Ingresa Nombre y DNI', 'error');
         return;
     }
 
     mostrarEstado('Guardando en Supabase...', '#06b6d4');
 
+    // Insert con las columnas reales de Supabase
     const { error } = await supabase
         .from('pacientes')
-        .insert([{ nombre, dni, telefono, diagnostico }]);
+        .insert([{ nombre, dni, telefono, email }]);
 
     if (error) {
         console.error('Error Supabase:', error);
         mostrarEstado('❌ Error: ' + error.message, '#ef4444');
-        mostrarNotificacion('❌ Error al guardar en Supabase', 'error');
+        mostrarNotificacion('❌ Error: ' + error.message, 'error');
     } else {
         mostrarEstado('✅ Paciente registrado.', '#10b981');
-        mostrarNotificacion(`✅ ¡${nombre} guardado con éxito!`, 'exito');
+        mostrarNotificacion(`✅ ¡${nombre} guardado correctamente!`, 'exito');
         limpiarFormulario();
         cargarTodosLosPacientes();
     }
 }
 
-// 2. CONSULTAR Y MOSTRAR REGISTROS
+// 2. CARGAR TODOS LOS PACIENTES
 async function cargarTodosLosPacientes() {
-    mostrarEstado('Sincronizando...', '#06b6d4');
+    mostrarEstado('Sincronizando con Supabase...', '#06b6d4');
 
     const { data, error } = await supabase
         .from('pacientes')
@@ -62,6 +63,7 @@ async function cargarTodosLosPacientes() {
         .order('id', { ascending: false });
 
     if (error) {
+        console.error('Error al cargar:', error);
         mostrarEstado('❌ Error: ' + error.message, '#ef4444');
         mostrarNotificacion('❌ Error al consultar la base de datos', 'error');
         return;
@@ -71,7 +73,7 @@ async function cargarTodosLosPacientes() {
     mostrarEstado(`Base de datos actualizada (${data.length} pacientes)`, '#10b981');
 }
 
-// 3. BUSCAR PACIENTES EN TIEMPO REAL
+// 3. BUSCAR PACIENTE
 async function buscarPaciente() {
     const busqueda = buscarInput ? buscarInput.value.trim() : '';
 
@@ -90,9 +92,9 @@ async function buscarPaciente() {
     renderizarLista(data);
 }
 
-// 4. BORRAR REGISTRO
+// 4. ELIMINAR PACIENTE
 window.borrarPaciente = async function(id, nombre) {
-    if (!confirm(`¿Eliminar definitivamente a ${nombre || 'este paciente'}?`)) return;
+    if (!confirm(`¿Deseas eliminar a ${nombre || 'este paciente'}?`)) return;
 
     mostrarEstado('Eliminando registro...', '#06b6d4');
 
@@ -100,14 +102,14 @@ window.borrarPaciente = async function(id, nombre) {
 
     if (error) {
         mostrarEstado('❌ Error al eliminar', '#ef4444');
-        mostrarNotificacion('❌ No se pudo borrar el registro', 'error');
+        mostrarNotificacion('❌ No se pudo eliminar', 'error');
     } else {
-        mostrarNotificacion('🗑️ Paciente eliminado correctamente', 'exito');
+        mostrarNotificacion('🗑️ Paciente eliminado', 'exito');
         cargarTodosLosPacientes();
     }
 };
 
-// AUXILIARES DE INTERFAZ
+// AUXILIARES
 function renderizarLista(pacientes) {
     if (!listaPacientes) return;
     listaPacientes.innerHTML = '';
@@ -127,13 +129,13 @@ function renderizarLista(pacientes) {
                 <div class="patient-info">
                     <h4>${p.nombre}</h4>
                     <div class="patient-meta">
-                        <span class="badge">DNI ${p.dni}</span>
+                        <span class="badge">DNI: ${p.dni}</span>
                         <span>📱 ${p.telefono || 'Sin teléfono'}</span>
-                        <span>📋 ${p.diagnostico || 'Sin diagnóstico'}</span>
+                        <span>📧 ${p.email || 'Sin observaciones'}</span>
                     </div>
                 </div>
             </div>
-            <button class="btn-delete" onclick="borrarPaciente(${p.id}, '${p.nombre}')" title="Eliminar Paciente">🗑️</button>
+            <button class="btn-delete" onclick="borrarPaciente(${p.id}, '${p.nombre}')" title="Eliminar paciente">🗑️</button>
         `;
         listaPacientes.appendChild(card);
     });
@@ -153,7 +155,6 @@ function mostrarEstado(mensaje, color) {
     }
 }
 
-// NOTIFICACIÓN FLOTANTE (TOAST)
 function mostrarNotificacion(mensaje, tipo = 'exito') {
     const toast = document.createElement('div');
     toast.style.cssText = `
@@ -183,5 +184,4 @@ function mostrarNotificacion(mensaje, tipo = 'exito') {
     }, 3000);
 }
 
-// Carga inicial
 document.addEventListener('DOMContentLoaded', cargarTodosLosPacientes);
