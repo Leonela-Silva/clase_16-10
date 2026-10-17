@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediData Pro - Panel de Control</title>
+    <title>MediData Pro - Control Médico</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
     <div class="dashboard-container">
-        <!-- Encabezado -->
+        <!-- Encabezado del Sistema -->
         <header class="app-header">
             <div class="brand">
                 <div class="brand-icon">🩺</div>
@@ -23,7 +23,7 @@
             </div>
         </header>
 
-        <!-- Contenido principal -->
+        <!-- Panel de Control Principal -->
         <div class="grid-layout">
             <!-- Formulario de Registro -->
             <aside class="card">
@@ -59,7 +59,7 @@
                 <p id="statusMsg" class="status-banner"></p>
             </aside>
 
-            <!-- Historial y Nómina -->
+            <!-- Lista de Historial de Pacientes -->
             <main class="card">
                 <div class="list-header">
                     <h2 class="card-title" style="margin-bottom:0;">📋 Historial de Registros</h2>
@@ -75,9 +75,14 @@
         </div>
     </div>
 
-    <!-- Carga de Scripts en Orden -->
+    <!-- Scripts cargados en el orden estricto -->
+    <!-- 1. Librería CDN de Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- 2. Inicialización de la conexión global (conexion.js) -->
     <script src="conexion.js"></script>
+    
+    <!-- 3. Funciones y eventos del panel (app.js) -->
     <script src="app.js"></script>
 </body>
 </html>
