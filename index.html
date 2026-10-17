@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediData Pro - Gestión Médica Integral</title>
+    <title>MediData Pro - Panel Médico</title>
+    
+    <!-- Consola Móvil para Celular (Eruda) -->
+    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <script>eruda.init();</script>
+
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -15,116 +20,69 @@
                 <div class="brand-icon">🩺</div>
                 <div>
                     <h1>MediData <span>Pro</span></h1>
-                    <p>Gestión de Pacientes, Turnos, Historias Clínicas y Especialistas</p>
+                    <p>Gestión de Pacientes e Historial Clínico</p>
                 </div>
             </div>
             <div class="status-indicator">
-                <span class="dot"></span> Base de Datos Conectada
+                <span class="dot"></span> Sistema Conectado
             </div>
         </header>
 
-        <!-- Contenido principal -->
+        <!-- Layout Principal -->
         <div class="grid-layout">
             
-            <!-- Panel Izquierdo: Módulos y Formularios -->
+            <!-- Panel Izquierdo: Formulario -->
             <aside class="card">
-                <!-- Botones para alternar módulos -->
-                <div class="tab-buttons" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px;">
-                    <button id="tabPacientes" class="btn btn-primary" onclick="cambiarModulo('pacientes')">👤 Pacientes</button>
-                    <button id="tabTurnos" class="btn btn-secondary" onclick="cambiarModulo('turnos')">📅 Turnos</button>
-                    <button id="tabHistorias" class="btn btn-secondary" onclick="cambiarModulo('historias')">📋 Historias</button>
-                    <button id="tabEspecialistas" class="btn btn-secondary" onclick="cambiarModulo('especialistas')">👨‍⚕️ Especialistas</button>
-                </div>
+                <h2 class="card-title">➕ Registrar Paciente</h2>
+                
+                <form id="pacienteForm" onsubmit="event.preventDefault();">
+                    <div class="form-group">
+                        <label for="nombre">Nombre y Apellido</label>
+                        <input type="text" id="nombre" placeholder="Ej. Ana García" required>
+                    </div>
 
-                <!-- Formulario 1: Pacientes -->
-                <div id="secFormPaciente">
-                    <h2 class="card-title">➕ Guardar Paciente en BD</h2>
-                    <form onsubmit="event.preventDefault();">
-                        <div class="form-group"><label>Nombre y Apellido</label><input type="text" id="nombre" placeholder="Ej. Dra. Ana Pérez" required></div>
-                        <div class="form-group"><label>DNI / Documento</label><input type="text" id="dni" placeholder="Ej. 30123456" required></div>
-                        <div class="form-group"><label>Teléfono</label><input type="text" id="telefono" placeholder="Ej. 1198765432"></div>
-                        <div class="form-group"><label>Email / Antecedentes</label><input type="text" id="email" placeholder="Ej. paciente@email.com"></div>
-                        <button type="button" id="btnGuardar" class="btn btn-primary" style="width: 100%; margin-top: 10px;">💾 Guardar Paciente</button>
-                    </form>
-                </div>
+                    <div class="form-group">
+                        <label for="dni">DNI / Documento</label>
+                        <input type="text" id="dni" placeholder="Ej. 30123456" required>
+                    </div>
 
-                <!-- Formulario 2: Turnos -->
-                <div id="secFormTurno" style="display: none;">
-                    <h2 class="card-title">📅 Guardar Turno en BD</h2>
-                    <form onsubmit="event.preventDefault();">
-                        <div class="form-group">
-                            <label>Seleccionar Paciente (traído de BD)</label>
-                            <select id="selectPacienteTurno" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1;"></select>
-                        </div>
-                        <div class="form-group"><label>Fecha y Hora</label><input type="datetime-local" id="fechaTurno" required></div>
-                        <div class="form-group"><label>Especialidad / Motivo</label><input type="text" id="motivoTurno" placeholder="Ej. Cardiología"></div>
-                        <button type="button" onclick="guardarTurnoBD()" class="btn btn-primary" style="width: 100%; margin-top: 10px;">💾 Agendar Turno</button>
-                    </form>
-                </div>
+                    <div class="form-group">
+                        <label for="telefono">Teléfono</label>
+                        <input type="text" id="telefono" placeholder="Ej. 1198765432">
+                    </div>
 
-                <!-- Formulario 3: Historias Clínicas -->
-                <div id="secFormHistoria" style="display: none;">
-                    <h2 class="card-title">📋 Registrar Historia Clínica en BD</h2>
-                    <form onsubmit="event.preventDefault();">
-                        <div class="form-group">
-                            <label>Seleccionar Paciente</label>
-                            <select id="selectPacienteHistoria" style="width:100%; padding:10px; border-radius:8px; border:1px solid #cbd5e1;"></select>
-                        </div>
-                        <div class="form-group"><label>Diagnóstico / Observaciones</label><textarea id="detalleHistoria" style="width:100%; height:80px; padding:8px; border-radius:8px; border:1px solid #cbd5e1;"></textarea></div>
-                        <button type="button" onclick="guardarHistoriaBD()" class="btn btn-primary" style="width: 100%; margin-top: 10px;">💾 Guardar Ficha Clínica</button>
-                    </form>
-                </div>
+                    <div class="form-group">
+                        <label for="email">Email / Observaciones</label>
+                        <input type="text" id="email" placeholder="Ej. paciente@email.com">
+                    </div>
 
-                <!-- Formulario 4: Especialistas -->
-                <div id="secFormEspecialista" style="display: none;">
-                    <h2 class="card-title">👨‍⚕️ Registrar Especialista en BD</h2>
-                    <form onsubmit="event.preventDefault();">
-                        <div class="form-group"><label>Nombre del Médico</label><input type="text" id="nombreEspecialista" placeholder="Ej. Dr. Carlos Gómez" required></div>
-                        <div class="form-group"><label>Especialidad</label><input type="text" id="especialidad" placeholder="Ej. Pediatría"></div>
-                        <button type="button" onclick="guardarEspecialistaBD()" class="btn btn-primary" style="width: 100%; margin-top: 10px;">💾 Guardar Especialista</button>
-                    </form>
-                </div>
+                    <div class="btn-group" style="margin-top: 15px;">
+                        <button type="button" id="btnGuardar" class="btn btn-primary" style="width: 100%;">💾 Guardar Paciente</button>
+                    </div>
+                </form>
 
-                <!-- Notificaciones de estado -->
+                <!-- Cartel de estado -->
                 <p id="statusMsg" class="status-banner" style="margin-top: 15px; font-weight: bold; min-height: 20px;"></p>
             </aside>
 
-            <!-- Panel Derecho: Devolución de datos desde la BD -->
+            <!-- Panel Derecho: Lista -->
             <main class="card">
-                <!-- Módulo Pacientes -->
-                <div id="secListaPacientes">
-                    <div class="list-header">
-                        <h2 class="card-title" style="margin-bottom:0;">📋 Pacientes Devueltos desde BD</h2>
-                        <div class="search-box">
-                            <input type="text" id="buscarInput" placeholder="🔍 Buscar en BD por DNI o Nombre...">
-                        </div>
+                <div class="list-header">
+                    <h2 class="card-title" style="margin-bottom: 0;">📋 Registros de Pacientes</h2>
+                    <div class="search-box">
+                        <input type="text" id="buscarInput" placeholder="🔍 Buscar por DNI o Nombre...">
                     </div>
-                    <div id="listaPacientes" class="patient-list" style="margin-top: 15px;"></div>
                 </div>
 
-                <!-- Módulo Turnos -->
-                <div id="secListaTurnos" style="display: none;">
-                    <h2 class="card-title">🗓️ Turnos Devueltos desde BD</h2>
-                    <div id="listaTurnos" class="patient-list" style="margin-top: 15px;"></div>
-                </div>
-
-                <!-- Módulo Historias Clínicas -->
-                <div id="secListaHistorias" style="display: none;">
-                    <h2 class="card-title">📂 Historias Clínicas Devueltas desde BD</h2>
-                    <div id="listaHistorias" class="patient-list" style="margin-top: 15px;"></div>
-                </div>
-
-                <!-- Módulo Especialistas -->
-                <div id="secListaEspecialistas" style="display: none;">
-                    <h2 class="card-title">🏥 Especialistas Devueltos desde BD</h2>
-                    <div id="listaEspecialistas" class="patient-list" style="margin-top: 15px;"></div>
+                <div id="listaPacientes" class="patient-list" style="margin-top: 15px;">
+                    <!-- Se cargará mediante JavaScript -->
                 </div>
             </main>
 
         </div>
     </div>
 
-    <!-- Carga de Scripts -->
+    <!-- Carga de Scripts en Orden -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="conexion.js"></script>
     <script src="app.js"></script>
