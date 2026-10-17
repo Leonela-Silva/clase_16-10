@@ -1,11 +1,4 @@
-// Configuración exacta del proyecto Supabase
-const SUPABASE_URL = 'https://vipxyjfjdnkfhxcukfut.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_BwdIhPDdZzhfDBGtDvoxuA__SLZjTTx';
-
-// Inicialización del cliente de Supabase
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// Event Listeners al cargar el DOM
+// Event Listeners al cargar la página
 document.addEventListener('DOMContentLoaded', () => {
     cargarTodosLosPacientes();
 
@@ -18,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (buscarInput) buscarInput.addEventListener('input', buscarPaciente);
 });
 
-// 1. OBTENER Y MOSTRAR PACIENTES
+// 1. CARGAR TODOS LOS PACIENTES
 async function cargarTodosLosPacientes() {
     const lista = document.getElementById('listaPacientes');
     const statusMsg = document.getElementById('statusMsg');
@@ -97,7 +90,7 @@ async function guardarPaciente() {
     }
 }
 
-// 3. BUSCAR EN TIEMPO REAL
+// 3. BUSCAR PACIENTE EN TIEMPO REAL
 async function buscarPaciente() {
     const busqueda = document.getElementById('buscarInput').value.trim();
 
@@ -157,7 +150,7 @@ function renderizarLista(pacientes) {
                     <div class="patient-meta">
                         <span class="badge">DNI: ${p.dni}</span>
                         <span>📱 ${p.telefono || 'Sin teléfono'}</span>
-                        <span>📧 ${p.email || 'Sin datos'}</span>
+                        <span>📧 ${p.email || 'Sin observaciones'}</span>
                     </div>
                 </div>
             </div>
