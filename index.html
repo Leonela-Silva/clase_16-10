@@ -13,7 +13,7 @@
         eruda.init();
     </script>
 
-    <!-- Estilos -->
+    <!-- Estilos existentes -->
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -27,7 +27,7 @@
 
                 <div>
                     <h1>MediData <span>Pro</span></h1>
-                    <p>Gestión de Pacientes e Historias Clínicas</p>
+                    <p>Gestión de Pacientes, Historias Clínicas y Turnos</p>
                 </div>
             </div>
 
@@ -51,36 +51,36 @@
                         <input
                             type="text"
                             id="nombre"
-                            placeholder="Ej. Ana García"
+                            placeholder="Nombre ficticio"
                             required
                         >
                     </div>
 
                     <div class="form-group">
-                        <label for="dni">DNI / Documento</label>
+                        <label for="dni">DNI / Documento ficticio</label>
                         <input
                             type="text"
                             id="dni"
-                            placeholder="Ej. 30123456"
+                            placeholder="Documento de prueba"
                             required
                         >
                     </div>
 
                     <div class="form-group">
-                        <label for="telefono">Teléfono</label>
+                        <label for="telefono">Teléfono ficticio</label>
                         <input
                             type="text"
                             id="telefono"
-                            placeholder="Ej. 1198765432"
+                            placeholder="Teléfono de prueba"
                         >
                     </div>
 
                     <div class="form-group">
-                        <label for="email">Email</label>
+                        <label for="email">Email ficticio</label>
                         <input
                             type="email"
                             id="email"
-                            placeholder="Ej. paciente@email.com"
+                            placeholder="correo@ejemplo.com"
                         >
                     </div>
 
@@ -97,10 +97,11 @@
 
                 </form>
 
-                <!-- Mensajes de estado -->
                 <p
                     id="statusMsg"
                     class="status-banner"
+                    role="status"
+                    aria-live="polite"
                     style="margin-top: 15px; font-weight: bold; min-height: 20px;"
                 ></p>
             </aside>
@@ -127,7 +128,7 @@
                     class="patient-list"
                     style="margin-top: 15px;"
                 >
-                    <!-- Los pacientes se cargarán mediante JavaScript -->
+                    Los pacientes se cargarán automáticamente.
                 </div>
 
             </main>
@@ -145,38 +146,138 @@
 
             <p>
                 Seleccioná un paciente para consultar sus historias clínicas.
+                Todos los registros de este prototipo son ficticios.
             </p>
 
             <div class="form-group">
-                <label for="pacienteHistoria">
-                    Seleccionar paciente
-                </label>
+                <label for="pacienteHistoria">Seleccionar paciente</label>
 
-                <select
-                    id="pacienteHistoria"
-                    style="width: 100%;"
-                >
-                    <option value="">
-                        Primero seleccioná un paciente
-                    </option>
+                <select id="pacienteHistoria" style="width: 100%;">
+                    <option value="">Primero seleccioná un paciente</option>
                 </select>
             </div>
 
-            <!-- Datos del paciente seleccionado -->
             <div
                 id="datosPacienteHistoria"
                 style="margin-top: 15px;"
             ></div>
 
-            <!-- Historias clínicas del paciente -->
             <div
                 id="listaHistorias"
                 style="margin-top: 15px;"
             >
-                <!-- Las historias se cargarán mediante JavaScript -->
+                Las historias clínicas se mostrarán aquí.
             </div>
 
         </section>
+
+        <!-- Panel de solicitud de turnos -->
+        <section
+            class="card"
+            id="panelTurnos"
+            style="margin-top: 20px;"
+        >
+
+            <h2 class="card-title">📅 Solicitud de Turnos</h2>
+
+            <p>
+                <strong>Prototipo con datos ficticios.</strong>
+                Las solicitudes quedan pendientes y no constituyen
+                turnos confirmados.
+            </p>
+
+            <form id="formTurno">
+
+                <div class="form-group">
+                    <label for="turnoPaciente">Paciente</label>
+
+                    <select id="turnoPaciente" required style="width: 100%;">
+                        <option value="">Seleccioná un paciente</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="turnoEspecialista">Especialista</label>
+
+                    <select
+                        id="turnoEspecialista"
+                        required
+                        style="width: 100%;"
+                    >
+                        <option value="">Seleccioná un especialista</option>
+                    </select>
+                </div>
+
+                <div
+                    id="infoEspecialista"
+                    class="status-banner"
+                    style="margin-top: 12px; min-height: 20px;"
+                    aria-live="polite"
+                >
+                    Seleccioná un especialista para consultar su horario.
+                </div>
+
+                <div class="form-group">
+                    <label for="turnoFecha">Fecha solicitada</label>
+                    <input type="date" id="turnoFecha" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="turnoHora">Hora solicitada</label>
+                    <input type="time" id="turnoHora" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="turnoMotivo">Motivo de la consulta</label>
+                    <textarea
+                        id="turnoMotivo"
+                        rows="3"
+                        maxlength="500"
+                        placeholder="Motivo ficticio de la consulta"
+                        required
+                        style="width: 100%;"
+                    ></textarea>
+                </div>
+
+                <div class="btn-group" style="margin-top: 15px;">
+                    <button
+                        type="submit"
+                        id="btnSolicitarTurno"
+                        class="btn btn-primary"
+                        style="width: 100%;"
+                    >
+                        📅 Solicitar Turno
+                    </button>
+                </div>
+
+                <p
+                    id="turnoStatus"
+                    class="status-banner"
+                    role="status"
+                    aria-live="polite"
+                    style="margin-top: 15px; min-height: 20px;"
+                ></p>
+
+            </form>
+
+            <hr>
+
+            <h3 class="card-title">📋 Solicitudes Registradas</h3>
+
+            <div id="listaTurnos" style="margin-top: 15px;">
+                Las solicitudes de turnos se mostrarán aquí.
+            </div>
+
+        </section>
+
+        <!-- Aviso general -->
+        <footer style="margin-top: 20px; padding: 15px 0; text-align: center;">
+            <p>
+                MediData Pro — Prototipo en desarrollo.
+                Todos los pacientes, profesionales e historias clínicas
+                son ficticios. No ingresar datos reales.
+            </p>
+        </footer>
 
     </div>
 
@@ -186,7 +287,7 @@
     <!-- Configuración de la conexión existente -->
     <script src="conexion.js"></script>
 
-    <!-- Lógica de la aplicación existente -->
+    <!-- Lógica de la aplicación -->
     <script src="app.js"></script>
 
 </body>
