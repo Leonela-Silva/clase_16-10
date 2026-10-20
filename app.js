@@ -1,8 +1,5 @@
 
-let pacientesDisponibles = [];
-let especialistasDisponibles = [];
-
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const btnGuardar = document.getElementById('btnGuardar');
     const buscarInput = document.getElementById('buscarInput');
     const pacienteHistoria = document.getElementById('pacienteHistoria');
@@ -32,51 +29,69 @@ document.addEventListener('DOMContentLoaded', () => {
         formTurno.addEventListener('submit', solicitarTurno);
     }
 
-    // Evita seleccionar fechas anteriores al día actual.
     if (turnoFecha) {
-        const hoy = new Date();
-        const anio = hoy.getFullYear();
-        const mes = String(hoy.getMonth() + 1).padStart(2, '0');
-        const dia = String(hoy.getDate()).padStart(2, '0');
-
-        turnoFecha.min = `${anio}-${mes}-${dia}`;
+        turnoFecha.min = obtenerFechaLocal();
     }
 
-    cargarPacientes();
-    cargarEspecialistas();
-    cargarTurnos();
+    // Cargar primero los pacientes y especialistas.
+    // Después, cargar las solicitudes para mostrar los nombres.
+    await cargarPacientes();
+    await cargarEspecialistas();
+    await cargarTurnos();
 });
+
+
+// ==================================================
+// VARIABLES GENERALES
+// ==================================================
+
+let pacientesDisponibles = [];
+let especialistasDisponibles = [];
+
+
+// ==================================================
+// CONEXIÓN CON SUPABASE
+// ==================================================
 
 function obtenerCliente() {
     if (!window.supabaseClient) {
-        throw new Error('La conexión con Supabase no está inicializada.');
+        throw new Error(
+            'No se pudo conectar con Supabase. Revisá conexion.js.'
+        );
     }
 
     return window.supabaseClient;
 }
 
-// Mostrar mensajes del formulario de pacientes.
-function mostrarEstado(mensaje, correcto) {
-    const statusMsg = document.getElementById('statusMsg');
-    if (!statusMsg) return;
 
-    statusMsg.textContent = mensaje;
-    statusMsg.style.color = correcto ? '#10b981' : '#ef4444';
+// ==================================================
+// MENSAJES DE ESTADO
+// ==================================================
+
+function mostrarEstado(mensaje, correcto = true) {
+    const elemento = document.getElementById('statusMsg');
+
+    if (!elemento) return;
+
+    elemento.textContent = mensaje;
+    elemento.style.color = correcto ? 'green' : 'red';
 }
 
-// Mostrar mensajes del formulario de turnos.
-function mostrarEstadoTurno(mensaje, correcto) {
-    const status = document.getElementById('turnoStatus');
-    if (!status) return;
+function mostrarEstadoTurno(mensaje, correcto = true) {
+    const elemento = document.getElementById('turnoStatus');
 
-    status.textContent = mensaje;
-    status.style.color = correcto ? '#10b981' : '#ef4444';
+    if (!elemento) return;
+
+    elemento.textContent = mensaje;
+    elemento.style.color = correcto ? 'green' : 'red';
 }
 
-// Cargar pacientes desde Supabase.
+
+// ==================================================
+// PACIENTES: CARGAR Y MOSTRAR
+// ==================================================
+
 async function cargarPacientes() {
-    const lista = document.getElementById('listaPacientes');
-
     try {
         const { data, error } = await obtenerCliente()
             .from('pacientes')
@@ -87,105 +102,103 @@ async function cargarPacientes() {
 
         pacientesDisponibles = data || [];
 
-        if (lista) {
-            if (pacientesDisponibles.length === 0) {
-                lista.textContent = 'No hay pacientes registrados aún.';
-            } else {
-                renderizarLista(pacientesDisponibles);
-            }
-        }
-
+        renderizarLista(pacientesDisponibles);
         actualizarSelectoresPacientes(pacientesDisponibles);
-
-        // Actualiza los nombres en el listado de turnos.
-        await cargarTurnos();
 
     } catch (err) {
         console.error('Error al cargar pacientes:', err);
 
-        if (lista) {
-            lista.textContent = 'No se pudieron cargar los registros: ' +
-                (err.message || 'Error desconocido');
-        }
+        mostrarEstado(
+            'No se pudieron cargar los pacientes: ' +
+            (err.message || 'Error desconocido'),
+            false
+        );
     }
 }
 
-// Actualizar ambos selectores sin perder la selección actual.
+
+// ==================================================
+// ACTUALIZAR SELECTORES DE PACIENTES
+// ==================================================
+
 function actualizarSelectoresPacientes(pacientes) {
-    actualizarSelectorPaciente(
-        document.getElementById('pacienteHistoria'),
-        pacientes,
-        'Seleccioná un paciente'
+    const selectorHistoria = document.getElementById('pacienteHistoria');
+    const selectorTurno = document.getElementById('turnoPaciente');
+
+    const actualizarSelector = (selector, textoInicial, seleccionado) => {
+        if (!selector) return;
+
+        selector.replaceChildren();
+
+        const opcionInicial = document.createElement('option');
+        opcionInicial.value = '';
+        opcionInicial.textContent = textoInicial;
+        selector.appendChild(opcionInicial);
+
+        pacientes.forEach(paciente => {
+            const opcion = document.createElement('option');
+
+            opcion.value = String(paciente.id);
+            opcion.textContent =
+                paciente.nombre + ' — DNI: ' + paciente.dni;
+
+            selector.appendChild(opcion);
+        });
+
+        const existe = pacientes.some(
+            paciente => String(paciente.id) === seleccionado
+        );
+
+        selector.value = existe ? seleccionado : '';
+    };
+
+    const historiaSeleccionada = selectorHistoria
+        ? selectorHistoria.value
+        : '';
+
+    const turnoSeleccionado = selectorTurno
+        ? selectorTurno.value
+        : '';
+
+    actualizarSelector(
+        selectorHistoria,
+        'Seleccioná un paciente',
+        historiaSeleccionada
     );
 
-    actualizarSelectorPaciente(
-        document.getElementById('turnoPaciente'),
-        pacientes,
-        'Seleccioná un paciente'
+    actualizarSelector(
+        selectorTurno,
+        'Seleccioná un paciente',
+        turnoSeleccionado
     );
-}
-
-function actualizarSelectorPaciente(selector, pacientes, textoInicial) {
-    if (!selector) return;
-
-    const seleccionAnterior = selector.value;
-
-    selector.replaceChildren();
-
-    const opcionInicial = document.createElement('option');
-    opcionInicial.value = '';
-    opcionInicial.textContent = textoInicial;
-    selector.appendChild(opcionInicial);
-
-    pacientes.forEach(paciente => {
-        const opcion = document.createElement('option');
-        opcion.value = paciente.id;
-        opcion.textContent =
-            `${paciente.nombre || 'Sin nombre'} — DNI: ${paciente.dni || 'S/D'}`;
-
-        selector.appendChild(opcion);
-    });
-
-    const existeSeleccion = pacientes.some(
-        paciente => String(paciente.id) === seleccionAnterior
-    );
-
-    selector.value = existeSeleccion ? seleccionAnterior : '';
 
     if (
-        selector.id === 'pacienteHistoria' &&
-        !existeSeleccion
+        selectorHistoria &&
+        !selectorHistoria.value
     ) {
-        const datosPaciente = document.getElementById('datosPacienteHistoria');
-        const listaHistorias = document.getElementById('listaHistorias');
+        const datos = document.getElementById('datosPacienteHistoria');
+        const lista = document.getElementById('listaHistorias');
 
-        if (datosPaciente) datosPaciente.replaceChildren();
-
-        if (listaHistorias) {
-            listaHistorias.textContent =
-                'Seleccioná un paciente para consultar sus historias clínicas.';
-        }
+        if (datos) datos.replaceChildren();
+        if (lista) lista.textContent = 'Seleccioná un paciente para ver sus historias clínicas.';
     }
 }
 
-// Guardar paciente.
+
+// ==================================================
+// PACIENTES: GUARDAR
+// ==================================================
+
 async function guardarPaciente() {
-    const nombreInput = document.getElementById('nombre');
-    const dniInput = document.getElementById('dni');
-    const telefonoInput = document.getElementById('telefono');
-    const emailInput = document.getElementById('email');
+    const nombre = document.getElementById('nombre').value.trim();
+    const dni = document.getElementById('dni').value.trim();
+    const telefono = document.getElementById('telefono').value.trim();
+    const email = document.getElementById('email').value.trim();
 
-    const nombre = nombreInput.value.trim();
-    const dni = dniInput.value.trim();
-    const telefono = telefonoInput.value.trim();
-    const email = emailInput.value.trim();
-
-    if (!nombre || !dni) {
-        mostrarEstado('Ingresá el nombre y el DNI.', false);
+    if (!nombre || !dni || !telefono || !email) {
+        mostrarEstado('Completá todos los campos.', false);
         return;
     }
-
-    mostrarEstado('Guardando...', true);
 
     try {
         const { error } = await obtenerCliente()
@@ -199,81 +212,93 @@ async function guardarPaciente() {
 
         if (error) throw error;
 
-        nombreInput.value = '';
-        dniInput.value = '';
-        telefonoInput.value = '';
-        emailInput.value = '';
+        mostrarEstado('Paciente registrado correctamente.', true);
 
-        mostrarEstado('Paciente guardado correctamente.', true);
+        const formulario = document.getElementById('pacienteForm');
+
+        if (formulario) {
+            formulario.reset();
+        } else {
+            document.getElementById('nombre').value = '';
+            document.getElementById('dni').value = '';
+            document.getElementById('telefono').value = '';
+            document.getElementById('email').value = '';
+        }
+
         await cargarPacientes();
 
     } catch (err) {
         console.error('Error al guardar paciente:', err);
 
         mostrarEstado(
-            'No se pudo guardar: ' + (err.message || 'Error desconocido'),
+            'No se pudo guardar el paciente: ' +
+            (err.message || 'Error desconocido'),
             false
         );
     }
 }
 
-// Mostrar pacientes de forma segura.
+
+// ==================================================
+// PACIENTES: MOSTRAR LISTADO
+// ==================================================
+
 function renderizarLista(pacientes) {
     const lista = document.getElementById('listaPacientes');
+
     if (!lista) return;
 
     lista.replaceChildren();
 
-    pacientes.forEach(p => {
-        const card = document.createElement('div');
-        card.className = 'patient-card';
+    if (!pacientes || pacientes.length === 0) {
+        lista.textContent = 'No hay pacientes registrados.';
+        return;
+    }
 
-        const main = document.createElement('div');
-        main.className = 'patient-main';
+    pacientes.forEach(paciente => {
+        const tarjeta = document.createElement('article');
+        tarjeta.className = 'patient-card';
 
-        const avatar = document.createElement('div');
-        avatar.className = 'patient-avatar';
-        avatar.textContent = p.nombre
-            ? p.nombre.charAt(0).toUpperCase()
-            : 'P';
+        const titulo = document.createElement('h3');
+        titulo.textContent = paciente.nombre;
 
-        const info = document.createElement('div');
-        info.className = 'patient-info';
+        const dni = document.createElement('p');
+        dni.textContent = 'DNI: ' + paciente.dni;
 
-        const nombre = document.createElement('h4');
-        nombre.textContent = p.nombre || 'Sin nombre';
+        const telefono = document.createElement('p');
+        telefono.textContent = 'Teléfono: ' + paciente.telefono;
 
-        const meta = document.createElement('div');
-        meta.className = 'patient-meta';
+        const email = document.createElement('p');
+        email.textContent = 'Email: ' + paciente.email;
 
-        const dni = document.createElement('span');
-        dni.className = 'badge';
-        dni.textContent = 'DNI: ' + (p.dni || 'S/D');
+        const botonEliminar = document.createElement('button');
+        botonEliminar.type = 'button';
+        botonEliminar.textContent = 'Eliminar paciente';
 
-        const telefono = document.createElement('span');
-        telefono.textContent =
-            'Teléfono: ' + (p.telefono || 'Sin teléfono');
+        botonEliminar.addEventListener('click', () => {
+            borrarPaciente(paciente.id);
+        });
 
-        const eliminar = document.createElement('button');
-        eliminar.className = 'btn-delete';
-        eliminar.type = 'button';
-        eliminar.textContent = '🗑️';
-        eliminar.title = 'Eliminar paciente';
-        eliminar.addEventListener('click', () => borrarPaciente(p.id));
+        tarjeta.append(
+            titulo,
+            dni,
+            telefono,
+            email,
+            botonEliminar
+        );
 
-        meta.append(dni, telefono);
-        info.append(nombre, meta);
-        main.append(avatar, info);
-        card.append(main, eliminar);
-        lista.appendChild(card);
+        lista.appendChild(tarjeta);
     });
 }
 
-// Buscar pacientes por nombre o DNI.
+
+// ==================================================
+// PACIENTES: BUSCAR
+// ==================================================
+
 async function buscarPaciente() {
-    const input = document.getElementById('buscarInput');
-    const busqueda = input.value.trim();
-    const lista = document.getElementById('listaPacientes');
+    const campo = document.getElementById('buscarInput');
+    const busqueda = campo.value.trim();
 
     if (!busqueda) {
         await cargarPacientes();
@@ -284,31 +309,37 @@ async function buscarPaciente() {
         const { data, error } = await obtenerCliente()
             .from('pacientes')
             .select('*')
-            .or(`nombre.ilike.%${busqueda}%,dni.ilike.%${busqueda}%`)
+            .or(
+                `nombre.ilike.%${busqueda}%,dni.ilike.%${busqueda}%`
+            )
             .order('id', { ascending: false });
 
         if (error) throw error;
 
-        if (!data || data.length === 0) {
-            if (lista) lista.textContent = 'No se encontraron pacientes.';
-            return;
-        }
-
-        renderizarLista(data);
+        renderizarLista(data || []);
 
     } catch (err) {
         console.error('Error al buscar pacientes:', err);
 
-        if (lista) {
-            lista.textContent = 'Error en la búsqueda: ' +
-                (err.message || 'Error desconocido');
-        }
+        mostrarEstado(
+            'No se pudo realizar la búsqueda: ' +
+            (err.message || 'Error desconocido'),
+            false
+        );
     }
 }
 
-// Eliminar paciente.
+
+// ==================================================
+// PACIENTES: ELIMINAR
+// ==================================================
+
 async function borrarPaciente(id) {
-    if (!confirm('¿Deseás eliminar este registro?')) return;
+    const confirmar = confirm(
+        '¿Estás seguro de que querés eliminar este paciente?'
+    );
+
+    if (!confirmar) return;
 
     try {
         const { error } = await obtenerCliente()
@@ -318,29 +349,37 @@ async function borrarPaciente(id) {
 
         if (error) throw error;
 
+        mostrarEstado('Paciente eliminado correctamente.', true);
+
         await cargarPacientes();
 
     } catch (err) {
         console.error('Error al eliminar paciente:', err);
 
-        alert('No se pudo eliminar: ' +
-            (err.message || 'Error desconocido'));
+        mostrarEstado(
+            'No se pudo eliminar el paciente. Es posible que tenga historias clínicas o turnos asociados. ' +
+            (err.message || ''),
+            false
+        );
     }
 }
 
-// Cargar historias clínicas de un paciente.
+
+// ==================================================
+// HISTORIAS CLÍNICAS: CONSULTAR
+// ==================================================
+
 async function cargarHistoriasClinicas(pacienteId) {
     const datosPaciente = document.getElementById('datosPacienteHistoria');
     const listaHistorias = document.getElementById('listaHistorias');
 
-    if (datosPaciente) datosPaciente.replaceChildren();
-    if (!listaHistorias) return;
+    if (!datosPaciente || !listaHistorias) return;
 
-    listaHistorias.textContent = '';
+    datosPaciente.replaceChildren();
 
     if (!pacienteId) {
         listaHistorias.textContent =
-            'Seleccioná un paciente para consultar sus historias clínicas.';
+            'Seleccioná un paciente para ver sus historias clínicas.';
         return;
     }
 
@@ -351,40 +390,44 @@ async function cargarHistoriasClinicas(pacienteId) {
 
         const { data: paciente, error: errorPaciente } = await cliente
             .from('pacientes')
-            .select('id, nombre, dni, email, telefono')
+            .select('*')
             .eq('id', pacienteId)
             .single();
 
         if (errorPaciente) throw errorPaciente;
 
-        if (datosPaciente) {
-            const titulo = document.createElement('h3');
-            titulo.textContent = paciente.nombre || 'Paciente';
+        const tituloPaciente = document.createElement('h3');
+        tituloPaciente.textContent = paciente.nombre;
 
-            const documento = document.createElement('p');
-            documento.textContent = 'DNI: ' + (paciente.dni || 'S/D');
+        const dni = document.createElement('p');
+        dni.textContent = 'DNI: ' + paciente.dni;
 
-            const contacto = document.createElement('p');
-            contacto.textContent =
-                'Email: ' + (paciente.email || 'Sin email') +
-                ' | Teléfono: ' + (paciente.telefono || 'Sin teléfono');
+        const telefono = document.createElement('p');
+        telefono.textContent = 'Teléfono: ' + paciente.telefono;
 
-            datosPaciente.append(titulo, documento, contacto);
-        }
+        const email = document.createElement('p');
+        email.textContent = 'Email: ' + paciente.email;
 
-        const { data: historias, error: errorHistorias } = await cliente
+        datosPaciente.append(
+            tituloPaciente,
+            dni,
+            telefono,
+            email
+        );
+
+        const { data: historias, error } = await cliente
             .from('historias_clinicas')
-            .select('id, paciente_id, fecha, diagnostico, tratamiento, medico_responsable')
+            .select('*')
             .eq('paciente_id', pacienteId)
             .order('fecha', { ascending: false });
 
-        if (errorHistorias) throw errorHistorias;
+        if (error) throw error;
 
         listaHistorias.replaceChildren();
 
         if (!historias || historias.length === 0) {
             listaHistorias.textContent =
-                'Este paciente todavía no tiene historias clínicas registradas.';
+                'Este paciente no tiene historias clínicas registradas.';
             return;
         }
 
@@ -392,23 +435,28 @@ async function cargarHistoriasClinicas(pacienteId) {
             const tarjeta = document.createElement('article');
             tarjeta.className = 'patient-card';
 
-            const titulo = document.createElement('h3');
-            titulo.textContent = 'Consulta: ' + formatearFecha(historia.fecha);
+            const fecha = document.createElement('h3');
+            fecha.textContent = 'Fecha: ' + formatearFecha(historia.fecha);
 
             const diagnostico = document.createElement('p');
             diagnostico.textContent =
-                'Diagnóstico: ' + (historia.diagnostico || 'Sin diagnóstico');
+                'Diagnóstico: ' + historia.diagnostico;
 
             const tratamiento = document.createElement('p');
             tratamiento.textContent =
-                'Tratamiento: ' + (historia.tratamiento || 'Sin tratamiento');
+                'Tratamiento: ' + historia.tratamiento;
 
             const medico = document.createElement('p');
             medico.textContent =
-                'Médico responsable: ' +
-                (historia.medico_responsable || 'Sin especificar');
+                'Médico responsable: ' + historia.medico_responsable;
 
-            tarjeta.append(titulo, diagnostico, tratamiento, medico);
+            tarjeta.append(
+                fecha,
+                diagnostico,
+                tratamiento,
+                medico
+            );
+
             listaHistorias.appendChild(tarjeta);
         });
 
@@ -421,37 +469,24 @@ async function cargarHistoriasClinicas(pacienteId) {
     }
 }
 
-// Dar formato a una fecha sin alterar el día por diferencias horarias.
-function formatearFecha(fecha) {
-    if (!fecha) return 'Fecha no especificada';
-
-    const partes = String(fecha).split('-');
-
-    if (
-        partes.length === 3 &&
-        partes[0].length === 4
-    ) {
-        return `${partes[2]}/${partes[1]}/${partes[0]}`;
-    }
-
-    const fechaConvertida = new Date(fecha);
-
-    if (Number.isNaN(fechaConvertida.getTime())) {
-        return fecha;
-    }
-
-    return fechaConvertida.toLocaleDateString('es-AR');
-}
 
 // ==================================================
-// MÓDULO DE ESPECIALISTAS
+// ESPECIALISTAS: CARGAR
 // ==================================================
 
 async function cargarEspecialistas() {
     const selector = document.getElementById('turnoEspecialista');
-    const info = document.getElementById('infoEspecialista');
 
-    if (!selector) return;
+    if (selector) {
+        selector.replaceChildren();
+
+        const opcionInicial = document.createElement('option');
+        opcionInicial.value = '';
+        opcionInicial.textContent = 'Cargando especialistas...';
+
+        selector.appendChild(opcionInicial);
+        selector.disabled = true;
+    }
 
     try {
         const { data, error } = await obtenerCliente()
@@ -463,46 +498,64 @@ async function cargarEspecialistas() {
 
         especialistasDisponibles = data || [];
 
-        selector.replaceChildren();
+        if (selector) {
+            selector.replaceChildren();
 
-        const opcionInicial = document.createElement('option');
-        opcionInicial.value = '';
-        opcionInicial.textContent = especialistasDisponibles.length
-            ? 'Seleccioná un especialista'
-            : 'No hay especialistas registrados';
+            const opcionInicial = document.createElement('option');
+            opcionInicial.value = '';
+            opcionInicial.textContent = especialistasDisponibles.length
+                ? 'Seleccioná un especialista'
+                : 'No hay especialistas registrados';
 
-        selector.appendChild(opcionInicial);
+            selector.appendChild(opcionInicial);
 
-        especialistasDisponibles.forEach(especialista => {
-            const opcion = document.createElement('option');
-            opcion.value = especialista.id;
-            opcion.textContent =
-                `${especialista.nombre} — ${especialista.especialidad}`;
+            especialistasDisponibles.forEach(especialista => {
+                const opcion = document.createElement('option');
 
-            selector.appendChild(opcion);
-        });
+                opcion.value = String(especialista.id);
+                opcion.textContent =
+                    especialista.nombre + ' — ' +
+                    especialista.especialidad;
+
+                selector.appendChild(opcion);
+            });
+
+            selector.disabled = false;
+        }
 
         mostrarInfoEspecialista();
 
     } catch (err) {
         console.error('Error al cargar especialistas:', err);
 
-        selector.replaceChildren();
+        especialistasDisponibles = [];
 
-        const opcion = document.createElement('option');
-        opcion.value = '';
-        opcion.textContent = 'No se pudieron cargar los especialistas';
-        selector.appendChild(opcion);
+        if (selector) {
+            selector.replaceChildren();
+
+            const opcion = document.createElement('option');
+            opcion.value = '';
+            opcion.textContent = 'No se pudieron cargar los especialistas';
+
+            selector.appendChild(opcion);
+            selector.disabled = true;
+        }
+
+        const info = document.getElementById('infoEspecialista');
 
         if (info) {
             info.textContent =
-                'Error al cargar especialistas: ' +
+                'Error al consultar especialistas: ' +
                 (err.message || 'Error desconocido');
         }
     }
 }
 
-// Mostrar el horario informativo del especialista seleccionado.
+
+// ==================================================
+// ESPECIALISTAS: MOSTRAR INFORMACIÓN
+// ==================================================
+
 function mostrarInfoEspecialista() {
     const selector = document.getElementById('turnoEspecialista');
     const info = document.getElementById('infoEspecialista');
@@ -510,34 +563,22 @@ function mostrarInfoEspecialista() {
     if (!selector || !info) return;
 
     const especialista = especialistasDisponibles.find(
-        e => String(e.id) === selector.value
+        item => String(item.id) === selector.value
     );
 
     if (!especialista) {
-        info.textContent =
-            'Seleccioná un especialista para consultar su horario.';
+        info.textContent = '';
         return;
     }
 
-    info.replaceChildren();
-
-    const especialidad = document.createElement('p');
-    especialidad.textContent =
-        'Especialidad: ' + (especialista.especialidad || 'No especificada');
-
-    const horario = document.createElement('p');
-    horario.textContent =
-        'Horario informado: ' + (especialista.horario || 'No especificado');
-
-    const aviso = document.createElement('p');
-    aviso.textContent =
-        'Este horario es informativo. La solicitud no confirma disponibilidad.';
-
-    info.append(especialidad, horario, aviso);
+    info.textContent =
+        'Especialidad: ' + especialista.especialidad +
+        ' | Horario de atención: ' + especialista.horario;
 }
 
+
 // ==================================================
-// MÓDULO DE SOLICITUDES DE TURNOS
+// TURNOS: SOLICITAR
 // ==================================================
 
 async function solicitarTurno(event) {
@@ -558,30 +599,21 @@ async function solicitarTurno(event) {
     }
 
     const paciente = pacientesDisponibles.find(
-        p => String(p.id) === pacienteId
+        item => String(item.id) === pacienteId
     );
 
     const especialista = especialistasDisponibles.find(
-        e => String(e.id) === especialistaId
+        item => String(item.id) === especialistaId
     );
 
-    if (!paciente) {
+    if (!paciente || !especialista) {
         mostrarEstadoTurno(
-            'No se encontró el paciente seleccionado. Actualizá la página e intentá nuevamente.',
+            'No se encontró el paciente o el especialista seleccionado. Actualizá la página e intentá nuevamente.',
             false
         );
         return;
     }
 
-    if (!especialista) {
-        mostrarEstadoTurno(
-            'No se encontró el especialista seleccionado. Actualizá la página e intentá nuevamente.',
-            false
-        );
-        return;
-    }
-
-    // Evitar solicitudes con fecha u hora anteriores al momento actual.
     const fechaSolicitada = new Date(`${fecha}T${hora}:00`);
     const ahora = new Date();
 
@@ -591,10 +623,7 @@ async function solicitarTurno(event) {
     }
 
     if (fechaSolicitada < ahora) {
-        mostrarEstadoTurno(
-            'Elegí una fecha y hora futuras.',
-            false
-        );
+        mostrarEstadoTurno('Elegí una fecha y hora futuras.', false);
         return;
     }
 
@@ -624,22 +653,16 @@ async function solicitarTurno(event) {
             true
         );
 
-        // Limpiar los campos de la solicitud.
         form.reset();
 
-        // Mantener la fecha mínima actualizada.
-        const turnoFecha = document.getElementById('turnoFecha');
+        const campoFecha = document.getElementById('turnoFecha');
 
-        if (turnoFecha) {
-            const hoy = new Date();
-            const anio = hoy.getFullYear();
-            const mes = String(hoy.getMonth() + 1).padStart(2, '0');
-            const dia = String(hoy.getDate()).padStart(2, '0');
-
-            turnoFecha.min = `${anio}-${mes}-${dia}`;
+        if (campoFecha) {
+            campoFecha.min = obtenerFechaLocal();
         }
 
         mostrarInfoEspecialista();
+
         await cargarTurnos();
 
     } catch (err) {
@@ -650,22 +673,63 @@ async function solicitarTurno(event) {
             (err.message || 'Error desconocido'),
             false
         );
+
     } finally {
         if (boton) boton.disabled = false;
     }
 }
 
-// Consultar y mostrar solicitudes registradas.
+
+// ==================================================
+// TURNOS: CARGAR Y MOSTRAR
+// ==================================================
+
 async function cargarTurnos() {
     const lista = document.getElementById('listaTurnos');
+
     if (!lista) return;
 
     lista.textContent = 'Cargando solicitudes...';
 
     try {
-        const { data: turnos, error } = await obtenerCliente()
+        const cliente = obtenerCliente();
+
+        // Asegurar que los nombres de pacientes estén disponibles.
+        if (pacientesDisponibles.length === 0) {
+            const { data, error } = await cliente
+                .from('pacientes')
+                .select('id, nombre, dni')
+                .order('id', { ascending: true });
+
+            if (error) throw error;
+
+            pacientesDisponibles = data || [];
+        }
+
+        // Asegurar que los nombres de especialistas estén disponibles.
+        if (especialistasDisponibles.length === 0) {
+            const { data, error } = await cliente
+                .from('especialistas')
+                .select('id, nombre, especialidad, horario')
+                .order('id', { ascending: true });
+
+            if (error) throw error;
+
+            especialistasDisponibles = data || [];
+        }
+
+        const { data: turnos, error } = await cliente
             .from('turnos')
-            .select('id, paciente_id, especialista_id, fecha, hora, especialidad, motivo, estado')
+            .select(`
+                id,
+                paciente_id,
+                especialista_id,
+                fecha,
+                hora,
+                especialidad,
+                motivo,
+                estado
+            `)
             .order('fecha', { ascending: true })
             .order('hora', { ascending: true });
 
@@ -678,13 +742,18 @@ async function cargarTurnos() {
             return;
         }
 
-        // Crear un mapa para identificar pacientes y especialistas.
         const pacientesPorId = new Map(
-            pacientesDisponibles.map(p => [String(p.id), p])
+            pacientesDisponibles.map(paciente => [
+                String(paciente.id),
+                paciente
+            ])
         );
 
         const especialistasPorId = new Map(
-            especialistasDisponibles.map(e => [String(e.id), e])
+            especialistasDisponibles.map(especialista => [
+                String(especialista.id),
+                especialista
+            ])
         );
 
         turnos.forEach(turno => {
@@ -694,7 +763,10 @@ async function cargarTurnos() {
             const titulo = document.createElement('h3');
             titulo.textContent = 'Solicitud de turno #' + turno.id;
 
-            const paciente = pacientesPorId.get(String(turno.paciente_id));
+            const paciente = pacientesPorId.get(
+                String(turno.paciente_id)
+            );
+
             const especialista = especialistasPorId.get(
                 String(turno.especialista_id)
             );
@@ -702,7 +774,9 @@ async function cargarTurnos() {
             const nombrePaciente = document.createElement('p');
             nombrePaciente.textContent =
                 'Paciente: ' +
-                (paciente ? paciente.nombre : 'Paciente #' + turno.paciente_id);
+                (paciente
+                    ? paciente.nombre
+                    : 'Paciente #' + turno.paciente_id);
 
             const nombreEspecialista = document.createElement('p');
             nombreEspecialista.textContent =
@@ -715,13 +789,14 @@ async function cargarTurnos() {
             especialidad.textContent =
                 'Especialidad: ' +
                 (turno.especialidad ||
-                    (especialista && especialista.especialidad) ||
+                    (especialista ? especialista.especialidad : '') ||
                     'No especificada');
 
             const fechaHora = document.createElement('p');
             fechaHora.textContent =
                 'Fecha: ' + formatearFecha(turno.fecha) +
-                ' | Hora: ' + (turno.hora
+                ' | Hora: ' +
+                (turno.hora
                     ? String(turno.hora).slice(0, 5)
                     : 'No especificada');
 
@@ -753,4 +828,29 @@ async function cargarTurnos() {
             'No se pudieron cargar las solicitudes: ' +
             (err.message || 'Error desconocido');
     }
+}
+
+
+// ==================================================
+// FECHAS: FORMATO
+// ==================================================
+
+function formatearFecha(fecha) {
+    if (!fecha) return 'No especificada';
+
+    const partes = String(fecha).split('-');
+
+    if (partes.length !== 3) return fecha;
+
+    return `${partes[2]}/${partes[1]}/${partes[0]}`;
+}
+
+function obtenerFechaLocal() {
+    const hoy = new Date();
+
+    const anio = hoy.getFullYear();
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+    const dia = String(hoy.getDate()).padStart(2, '0');
+
+    return `${anio}-${mes}-${dia}`;
 }
