@@ -1,90 +1,193 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediData Pro - Panel Médico</title>
-    
-    <!-- Consola Móvil para Celular (Eruda) -->
-    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-    <script>eruda.init();</script>
 
+    <title>MediData Pro - Panel Médico</title>
+
+    <!-- Consola de depuración -->
+    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <script>
+        eruda.init();
+    </script>
+
+    <!-- Estilos -->
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
     <div class="dashboard-container">
+
         <!-- Encabezado -->
         <header class="app-header">
             <div class="brand">
                 <div class="brand-icon">🩺</div>
+
                 <div>
                     <h1>MediData <span>Pro</span></h1>
-                    <p>Gestión de Pacientes e Historial Clínico</p>
+                    <p>Gestión de Pacientes e Historias Clínicas</p>
                 </div>
             </div>
+
             <div class="status-indicator">
-                <span class="dot"></span> Sistema Conectado
+                <span class="dot"></span>
+                Sistema Conectado
             </div>
         </header>
 
-        <!-- Layout Principal -->
+        <!-- Panel principal -->
         <div class="grid-layout">
-            
-            <!-- Panel Izquierdo: Formulario -->
+
+            <!-- Formulario de pacientes -->
             <aside class="card">
                 <h2 class="card-title">➕ Registrar Paciente</h2>
-                
+
                 <form id="pacienteForm" onsubmit="event.preventDefault();">
+
                     <div class="form-group">
                         <label for="nombre">Nombre y Apellido</label>
-                        <input type="text" id="nombre" placeholder="Ej. Ana García" required>
+                        <input
+                            type="text"
+                            id="nombre"
+                            placeholder="Ej. Ana García"
+                            required
+                        >
                     </div>
 
                     <div class="form-group">
                         <label for="dni">DNI / Documento</label>
-                        <input type="text" id="dni" placeholder="Ej. 30123456" required>
+                        <input
+                            type="text"
+                            id="dni"
+                            placeholder="Ej. 30123456"
+                            required
+                        >
                     </div>
 
                     <div class="form-group">
                         <label for="telefono">Teléfono</label>
-                        <input type="text" id="telefono" placeholder="Ej. 1198765432">
+                        <input
+                            type="text"
+                            id="telefono"
+                            placeholder="Ej. 1198765432"
+                        >
                     </div>
 
                     <div class="form-group">
-                        <label for="email">Email / Observaciones</label>
-                        <input type="text" id="email" placeholder="Ej. paciente@email.com">
+                        <label for="email">Email</label>
+                        <input
+                            type="email"
+                            id="email"
+                            placeholder="Ej. paciente@email.com"
+                        >
                     </div>
 
                     <div class="btn-group" style="margin-top: 15px;">
-                        <button type="button" id="btnGuardar" class="btn btn-primary" style="width: 100%;">💾 Guardar Paciente</button>
+                        <button
+                            type="button"
+                            id="btnGuardar"
+                            class="btn btn-primary"
+                            style="width: 100%;"
+                        >
+                            💾 Guardar Paciente
+                        </button>
                     </div>
+
                 </form>
 
-                <!-- Cartel de estado -->
-                <p id="statusMsg" class="status-banner" style="margin-top: 15px; font-weight: bold; min-height: 20px;"></p>
+                <!-- Mensajes de estado -->
+                <p
+                    id="statusMsg"
+                    class="status-banner"
+                    style="margin-top: 15px; font-weight: bold; min-height: 20px;"
+                ></p>
             </aside>
 
-            <!-- Panel Derecho: Lista -->
+            <!-- Lista de pacientes -->
             <main class="card">
+
                 <div class="list-header">
-                    <h2 class="card-title" style="margin-bottom: 0;">📋 Registros de Pacientes</h2>
+                    <h2 class="card-title" style="margin-bottom: 0;">
+                        📋 Registros de Pacientes
+                    </h2>
+
                     <div class="search-box">
-                        <input type="text" id="buscarInput" placeholder="🔍 Buscar por DNI o Nombre...">
+                        <input
+                            type="text"
+                            id="buscarInput"
+                            placeholder="🔍 Buscar por DNI o nombre..."
+                        >
                     </div>
                 </div>
 
-                <div id="listaPacientes" class="patient-list" style="margin-top: 15px;">
-                    <!-- Se cargará mediante JavaScript -->
+                <div
+                    id="listaPacientes"
+                    class="patient-list"
+                    style="margin-top: 15px;"
+                >
+                    <!-- Los pacientes se cargarán mediante JavaScript -->
                 </div>
+
             </main>
 
         </div>
+
+        <!-- Panel de historias clínicas -->
+        <section
+            class="card"
+            id="panelHistorias"
+            style="margin-top: 20px;"
+        >
+
+            <h2 class="card-title">🩺 Historias Clínicas</h2>
+
+            <p>
+                Seleccioná un paciente para consultar sus historias clínicas.
+            </p>
+
+            <div class="form-group">
+                <label for="pacienteHistoria">
+                    Seleccionar paciente
+                </label>
+
+                <select
+                    id="pacienteHistoria"
+                    style="width: 100%;"
+                >
+                    <option value="">
+                        Primero seleccioná un paciente
+                    </option>
+                </select>
+            </div>
+
+            <!-- Datos del paciente seleccionado -->
+            <div
+                id="datosPacienteHistoria"
+                style="margin-top: 15px;"
+            ></div>
+
+            <!-- Historias clínicas del paciente -->
+            <div
+                id="listaHistorias"
+                style="margin-top: 15px;"
+            >
+                <!-- Las historias se cargarán mediante JavaScript -->
+            </div>
+
+        </section>
+
     </div>
 
-    <!-- Carga de Scripts en Orden -->
+    <!-- Librería de Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Configuración de la conexión existente -->
     <script src="conexion.js"></script>
+
+    <!-- Lógica de la aplicación existente -->
     <script src="app.js"></script>
+
 </body>
 </html>
