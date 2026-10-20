@@ -1,153 +1,200 @@
-// app.js - Versión Simplificada y Garantizada
+
 document.addEventListener('DOMContentLoaded', () => {
-    // Carga inicial al abrir
     cargarPacientes();
 
-    // Asignación de botones
     const btnGuardar = document.getElementById('btnGuardar');
     const buscarInput = document.getElementById('buscarInput');
 
-    if (btnGuardar) btnGuardar.addEventListener('click', guardarPaciente);
-    if (buscarInput) buscarInput.addEventListener('input', buscarPaciente);
+    if (btnGuardar) {
+        btnGuardar.addEventListener('click', guardarPaciente);
+    }
+
+    if (buscarInput) {
+        buscarInput.addEventListener('input', buscarPaciente);
+    }
 });
 
-// FUNCIÓN DE CARGA SIMPLE
+function obtenerCliente() {
+    if (!window.supabaseClient) {
+        throw new Error('La conexión con Supabase no está inicializada.');
+    }
+
+    return window.supabaseClient;
+}
+
+// Cargar y mostrar pacientes
 async function cargarPacientes() {
     const lista = document.getElementById('listaPacientes');
     if (!lista) return;
 
     try {
-        // Consultamos únicamente campos básicos que existen en la tabla
-        const { data, error } = await supabase
+        const { data, error } = await obtenerCliente()
             .from('pacientes')
             .select('*')
             .order('id', { ascending: false });
 
-        if (error) {
-            console.error('Error de Supabase:', error.message);
-            lista.innerHTML = `<div class="empty-state">Error al cargar: ${error.message}</div>`;
-            return;
-        }
+        if (error) throw error;
 
         if (!data || data.length === 0) {
-            lista.innerHTML = '<div class="empty-state">No hay pacientes registrados aún.</div>';
+            lista.textContent = 'No hay pacientes registrados aún.';
             return;
         }
 
         renderizarLista(data);
-
     } catch (err) {
-        console.error('Error general:', err);
+        console.error('Error al cargar pacientes:', err);
+        lista.textContent = 'No se pudieron cargar los registros: ' +
+            (err.message || 'Error desconocido');
     }
 }
 
-// FUNCIÓN DE GUARDADO SEGURO
+// Guardar paciente
 async function guardarPaciente() {
     const nombreInput = document.getElementById('nombre');
     const dniInput = document.getElementById('dni');
     const telefonoInput = document.getElementById('telefono');
+    const emailInput = document.getElementById('email');
     const statusMsg = document.getElementById('statusMsg');
 
-    const nombre = nombreInput ? nombreInput.value.trim() : '';
-    const dni = dniInput ? dniInput.value.trim() : '';
-    const telefono = telefonoInput ? telefonoInput.value.trim() : '';
+    const nombre = nombreInput.value.trim();
+    const dni = dniInput.value.trim();
+    const telefono = telefonoInput.value.trim();
+    const email = emailInput.value.trim();
 
     if (!nombre || !dni) {
-        if (statusMsg) {
-            statusMsg.innerText = '⚠️ Por favor ingresa Nombre y DNI';
-            statusMsg.style.color = '#ef4444';
-        }
+        mostrarEstado('Ingresá el nombre y el DNI.', false);
         return;
     }
 
-    if (statusMsg) statusMsg.innerText = 'Guardando...';
+    mostrarEstado('Guardando...', true);
 
-    // Insertamos solo las columnas universales
-    const { error } = await supabase
-        .from('pacientes')
-        .insert([{ nombre: nombre, dni: dni, telefono: telefono }]);
+    try {
+        const { error } = await obtenerCliente()
+            .from('pacientes')
+            .insert([{
+                nombre: nombre,
+                dni: dni,
+                telefono: telefono,
+                email: email
+            }]);
 
-    if (error) {
-        console.error('Error al guardar:', error);
-        if (statusMsg) {
-            statusMsg.innerText = '❌ Error: ' + error.message;
-            statusMsg.style.color = '#ef4444';
-        }
-    } else {
-        if (statusMsg) {
-            statusMsg.innerText = '✅ ¡Paciente guardado con éxito!';
-            statusMsg.style.color = '#10b981';
-        }
-        // Limpiamos los inputs
-        if (nombreInput) nombreInput.value = '';
-        if (dniInput) dniInput.value = '';
-        if (telefonoInput) telefonoInput.value = '';
+        if (error) throw error;
 
-        // Recargamos la lista inmediatamente
-        cargarPacientes();
+        nombreInput.value = '';
+        dniInput.value = '';
+        telefonoInput.value = '';
+        emailInput.value = '';
 
-        setTimeout(() => { if (statusMsg) statusMsg.innerText = ''; }, 3000);
+        mostrarEstado('Paciente guardado correctamente.', true);
+        await cargarPacientes();
+
+    } catch (err) {
+        console.error('Error al guardar paciente:', err);
+        mostrarEstado('No se pudo guardar: ' +
+            (err.message || 'Error desconocido'), false);
+    }
+
+    function mostrarEstado(mensaje, correcto) {
+        if (!statusMsg) return;
+        statusMsg.textContent = mensaje;
+        statusMsg.style.color = correcto ? '#10b981' : '#ef4444';
     }
 }
 
-// RENDERIZADO DE LA LISTA
+// Mostrar pacientes sin interpretar los datos como HTML
 function renderizarLista(pacientes) {
     const lista = document.getElementById('listaPacientes');
     if (!lista) return;
 
-    lista.innerHTML = '';
+    lista.replaceChildren();
+
     pacientes.forEach(p => {
-        const inicial = p.nombre ? p.nombre.charAt(0).toUpperCase() : 'P';
         const card = document.createElement('div');
         card.className = 'patient-card';
-        card.innerHTML = `
-            <div class="patient-main">
-                <div class="patient-avatar">${inicial}</div>
-                <div class="patient-info">
-                    <h4>${p.nombre || 'Sin nombre'}</h4>
-                    <div class="patient-meta">
-                        <span class="badge">DNI: ${p.dni || 'S/D'}</span>
-                        <span>📱 ${p.telefono || 'Sin teléfono'}</span>
-                    </div>
-                </div>
-            </div>
-            <button class="btn-delete" onclick="borrarPaciente(${p.id})" title="Eliminar">🗑️</button>
-        `;
+
+        const main = document.createElement('div');
+        main.className = 'patient-main';
+
+        const avatar = document.createElement('div');
+        avatar.className = 'patient-avatar';
+        avatar.textContent = p.nombre ? p.nombre.charAt(0).toUpperCase() : 'P';
+
+        const info = document.createElement('div');
+        info.className = 'patient-info';
+
+        const nombre = document.createElement('h4');
+        nombre.textContent = p.nombre || 'Sin nombre';
+
+        const meta = document.createElement('div');
+        meta.className = 'patient-meta';
+
+        const dni = document.createElement('span');
+        dni.className = 'badge';
+        dni.textContent = 'DNI: ' + (p.dni || 'S/D');
+
+        const telefono = document.createElement('span');
+        telefono.textContent = 'Teléfono: ' + (p.telefono || 'Sin teléfono');
+
+        const eliminar = document.createElement('button');
+        eliminar.className = 'btn-delete';
+        eliminar.type = 'button';
+        eliminar.textContent = '🗑️';
+        eliminar.title = 'Eliminar paciente';
+        eliminar.addEventListener('click', () => borrarPaciente(p.id));
+
+        meta.append(dni, telefono);
+        info.append(nombre, meta);
+        main.append(avatar, info);
+        card.append(main, eliminar);
         lista.appendChild(card);
     });
 }
 
-// BUSCADOR EN TIEMPO REAL
+// Buscar por nombre o DNI
 async function buscarPaciente() {
-    const busqueda = document.getElementById('buscarInput').value.trim();
+    const input = document.getElementById('buscarInput');
+    const busqueda = input.value.trim();
 
-    if (busqueda === '') {
-        cargarPacientes();
+    if (!busqueda) {
+        await cargarPacientes();
         return;
     }
 
-    const { data, error } = await supabase
-        .from('pacientes')
-        .select('*')
-        .or(`nombre.ilike.%${busqueda}%,dni.ilike.%${busqueda}%`);
+    const lista = document.getElementById('listaPacientes');
 
-    if (!error && data) {
-        renderizarLista(data);
+    try {
+        const { data, error } = await obtenerCliente()
+            .from('pacientes')
+            .select('*')
+            .or(`nombre.ilike.%${busqueda}%,dni.ilike.%${busqueda}%`)
+            .order('id', { ascending: false });
+
+        if (error) throw error;
+
+        renderizarLista(data || []);
+    } catch (err) {
+        console.error('Error al buscar pacientes:', err);
+        lista.textContent = 'Error en la búsqueda: ' +
+            (err.message || 'Error desconocido');
     }
 }
 
-// ELIMINAR PACIENTE
+// Eliminar paciente
 async function borrarPaciente(id) {
-    if (!confirm('¿Deseas eliminar este registro?')) return;
+    if (!confirm('¿Deseás eliminar este registro?')) return;
 
-    const { error } = await supabase
-        .from('pacientes')
-        .delete()
-        .eq('id', id);
+    try {
+        const { error } = await obtenerCliente()
+            .from('pacientes')
+            .delete()
+            .eq('id', id);
 
-    if (!error) {
-        cargarPacientes();
-    } else {
-        alert('Error al eliminar: ' + error.message);
+        if (error) throw error;
+
+        await cargarPacientes();
+    } catch (err) {
+        console.error('Error al eliminar paciente:', err);
+        alert('No se pudo eliminar: ' +
+            (err.message || 'Error desconocido'));
     }
 }
