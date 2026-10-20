@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', async () => {
     const btnGuardar = document.getElementById('btnGuardar');
     const buscarInput = document.getElementById('buscarInput');
@@ -32,8 +33,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         turnoFecha.min = obtenerFechaLocal();
     }
 
-    // Cargar primero los pacientes y especialistas.
-    // Después, cargar las solicitudes para mostrar los nombres.
     await cargarPacientes();
     await cargarEspecialistas();
     await cargarTurnos();
@@ -171,15 +170,16 @@ function actualizarSelectoresPacientes(pacientes) {
         turnoSeleccionado
     );
 
-    if (
-        selectorHistoria &&
-        !selectorHistoria.value
-    ) {
+    if (selectorHistoria && !selectorHistoria.value) {
         const datos = document.getElementById('datosPacienteHistoria');
         const lista = document.getElementById('listaHistorias');
 
         if (datos) datos.replaceChildren();
-        if (lista) lista.textContent = 'Seleccioná un paciente para ver sus historias clínicas.';
+
+        if (lista) {
+            lista.textContent =
+                'Seleccioná un paciente para ver sus historias clínicas.';
+        }
     }
 }
 
@@ -272,7 +272,10 @@ function renderizarLista(pacientes) {
 
         const botonEliminar = document.createElement('button');
         botonEliminar.type = 'button';
-        botonEliminar.textContent = 'Eliminar paciente';
+        botonEliminar.innerHTML = '🗑️';
+        botonEliminar.title = 'Eliminar paciente';
+        botonEliminar.setAttribute('aria-label', 'Eliminar paciente');
+        botonEliminar.className = 'btn-eliminar';
 
         botonEliminar.addEventListener('click', () => {
             borrarPaciente(paciente.id);
@@ -577,6 +580,101 @@ function mostrarInfoEspecialista() {
 
 
 // ==================================================
+// TURNOS: VALIDAR HORARIO DEL ESPECIALISTA
+// ==================================================
+
+function validarHorarioEspecialista(especialistaId, fecha, hora) {
+    const reglas = {
+        1: {
+            dias: [1, 2, 3, 4, 5],
+            inicio: '08:00',
+            fin: '13:00',
+            descripcion: 'lunes a viernes, de 08:00 a 13:00'
+        },
+        2: {
+            dias: [2, 4],
+            inicio: '13:00',
+            fin: '18:00',
+            descripcion: 'martes y jueves, de 13:00 a 18:00'
+        },
+        3: {
+            dias: [1, 2, 3, 4, 5, 6],
+            inicio: '09:00',
+            fin: '15:00',
+            descripcion: 'lunes a sábados, de 09:00 a 15:00'
+        }
+    };
+
+    const regla = reglas[Number(especialistaId)];
+
+    if (!regla) {
+        return {
+            valido: false,
+            mensaje: 'No hay un horario configurado para este especialista.'
+        };
+    }
+
+    // Construir la fecha local sin convertirla a UTC.
+    const partes = fecha.split('-').map(Number);
+
+    if (partes.length !== 3 || partes.some(Number.isNaN)) {
+        return {
+            valido: false,
+            mensaje: 'La fecha ingresada no es válida.'
+        };
+    }
+
+    const fechaLocal = new Date(
+        partes[0],
+        partes[1] - 1,
+        partes[2]
+    );
+
+    // Comprobar que la fecha realmente exista.
+    if (
+        fechaLocal.getFullYear() !== partes[0] ||
+        fechaLocal.getMonth() !== partes[1] - 1 ||
+        fechaLocal.getDate() !== partes[2]
+    ) {
+        return {
+            valido: false,
+            mensaje: 'La fecha ingresada no es válida.'
+        };
+    }
+
+    const diaSemana = fechaLocal.getDay();
+    const horaIngresada = hora.slice(0, 5);
+
+    if (!regla.dias.includes(diaSemana)) {
+        return {
+            valido: false,
+            mensaje:
+                'Este especialista no atiende ese día. Su horario es ' +
+                regla.descripcion + '.'
+        };
+    }
+
+    // El inicio está incluido; la hora de cierre no.
+    if (
+        horaIngresada < regla.inicio ||
+        horaIngresada >= regla.fin
+    ) {
+        return {
+            valido: false,
+            mensaje:
+                'La hora solicitada está fuera del horario de atención. ' +
+                'Este especialista atiende ' + regla.descripcion + '.'
+        };
+    }
+
+    return {
+        valido: true,
+        mensaje: ''
+    };
+}
+
+
+// ==================================================
 // TURNOS: SOLICITAR
 // ==================================================
 
@@ -626,6 +724,18 @@ async function solicitarTurno(event) {
         return;
     }
 
+    // IMPORTANTE: comprobar el horario antes de guardar en Supabase.
+    const validacionHorario = validarHorarioEspecialista(
+        especialistaId,
+        fecha,
+        hora
+    );
+
+    if (!validacionHorario.valido) {
+        mostrarEstadoTurno(validacionHorario.mensaje, false);
+        return;
+    }
+
     mostrarEstadoTurno('Guardando solicitud...', true);
 
     if (boton) boton.disabled = true;
@@ -652,7 +762,7 @@ async function solicitarTurno(event) {
             true
         );
 
-        form.reset();
+        if (form) form.reset();
 
         const campoFecha = document.getElementById('turnoFecha');
 
@@ -693,7 +803,6 @@ async function cargarTurnos() {
     try {
         const cliente = obtenerCliente();
 
-        // Asegurar que los nombres de pacientes estén disponibles.
         if (pacientesDisponibles.length === 0) {
             const { data, error } = await cliente
                 .from('pacientes')
@@ -705,7 +814,6 @@ async function cargarTurnos() {
             pacientesDisponibles = data || [];
         }
 
-        // Asegurar que los nombres de especialistas estén disponibles.
         if (especialistasDisponibles.length === 0) {
             const { data, error } = await cliente
                 .from('especialistas')
